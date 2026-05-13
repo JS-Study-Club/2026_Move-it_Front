@@ -6,15 +6,16 @@ import checkIcon from '../img/checkIcon - feedback.svg';
 import rhythemIcon from '../img/rhythm.png';
 import accuracyIcon from '../img/accuracy.png';
 import expressionIcon from '../img/expression.png';
+import backIcon from '../img/backIcon.svg';
 
 import {
     FeedbackPageContainer,
-    TopBar, CodeBtn,
+    TopBar, BackBtn,
     CharacterSection, CharacterImg, CharacterLabel, SpeechBubble,
     TabRow, TabItem, TabCircle, TabLabel,
     FeedbackCard, CardTitle, CardSubtitle,
     FeedbackList, FeedbackItem, FeedbackIcon,
-    NextBtn,
+    NextBtn, Score,
 } from './FeedbackPage.styles';
 import type { FeedbackData } from '../types';
 
@@ -29,7 +30,6 @@ const FEEDBACK_DATA: Record<string, FeedbackData> = {
             subtitle: '잘하고 있어요 계속 진행해!!',
             variant: 'green',
             iconBg: '#d4f7d4',
-            iconEmoji: '✅',
             items: [
                 '음악 박자에 맞게 움직임을 조절하고 있어요.',
                 '볼이라 타이밍을 비교적 자연스럽게 타요.',
@@ -41,7 +41,6 @@ const FEEDBACK_DATA: Record<string, FeedbackData> = {
             subtitle: '더 잘 할 수 있을 거예요!',
             variant: 'pink',
             iconBg: '#ffd6d6',
-            iconEmoji: '📌',
             items: [
                 '일부 동작이 음악보다 살짝 늦게 시작됩니다.',
                 '박자가 빠른 구간에서 너무 빠르게 진행됩니다.',
@@ -56,7 +55,6 @@ const FEEDBACK_DATA: Record<string, FeedbackData> = {
             subtitle: '잘하고 있는 부분 · 칭찬해요!',
             variant: 'green',
             iconBg: '#d4f7d4',
-            iconEmoji: '✅',
             items: [
                 '얼굴 표정이 음악과 잘 어울려요.',
                 '손짓과 눈빛을 활용해 감정을 표현해요.',
@@ -68,7 +66,6 @@ const FEEDBACK_DATA: Record<string, FeedbackData> = {
             subtitle: '더 잘 할 수 있을 거예요!',
             variant: 'pink',
             iconBg: '#ffd6d6',
-            iconEmoji: '📌',
             items: [
                 '팔 동작이 조금 더 뻗어야 무대 전달력이 올라가요.',
                 '시선이 약간 불안정하게 흔들립니다.',
@@ -79,9 +76,9 @@ const FEEDBACK_DATA: Record<string, FeedbackData> = {
 };
 
 const TAB_CONFIG = [
-    { key: 'rhythm', img: <img src={rhythemIcon} alt="리듬" />, label: '리듬', color: '#F6C039' },
-    { key: 'accuracy', img: <img src={accuracyIcon} alt="정확도" />, label: '정확도', color: '#7EC8E3' },
-    { key: 'expression', img: <img src={expressionIcon} alt="표현력" />, label: '표현력', color: '#7EC8E3' },
+    { key: 'rhythm', img: <img src={rhythemIcon} alt="리듬" />, label: '리듬'},
+    { key: 'accuracy', img: <img src={accuracyIcon} alt="정확도" />, label: '정확도' },
+    { key: 'expression', img: <img src={expressionIcon} alt="표현력" />, label: '표현력'},
 ] as const;
 
 type TabKey = (typeof TAB_CONFIG)[number]['key'];
@@ -106,7 +103,7 @@ const FeedbackPage: React.FC = () => {
 
             {/* 타이틀 바 */}
             <TopBar>
-                <CodeBtn aria-label="코드 보기">{'</>'}</CodeBtn>
+                <BackBtn aria-label="뒤로가기"><img src={backIcon} alt="뒤로가기" /></BackBtn>
             </TopBar>
 
             {/* 캐릭터 영역 */}
@@ -122,17 +119,18 @@ const FeedbackPage: React.FC = () => {
                 {TAB_CONFIG.map((tab) => (
                     <TabItem key={tab.key}>
                         <TabCircle
-                            $color={tab.color}
                             $active={activeTab === tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             aria-pressed={activeTab === tab.key}
                         >
                             {tab.img}
+                            <TabLabel>{tab.label}</TabLabel>
                         </TabCircle>
-                        <TabLabel>{tab.label}</TabLabel>
                     </TabItem>
                 ))}
             </TabRow>
+
+            <Score>80 score!</Score>
 
             {/* 잘한 점 카드 */}
             <FeedbackCard $variant="green">

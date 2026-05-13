@@ -1,10 +1,6 @@
 import styled, { keyframes } from "styled-components";
 ///////////////브랜치 충돌 때문에 파일 날라갈 수도 있으니 해결하고 푸시하기
 // ─── 애니메이션 ────────────────────────────────────────────────────────────
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-`;
 
 const popIn = keyframes`
   0%   { opacity: 0; transform: scale(0.8); }
@@ -26,12 +22,12 @@ export const TopBar = styled.div`
   margin-bottom: 16px;
 `;
 
-export const CodeBtn = styled.button`
+export const BackBtn = styled.button`
+  width: 27px;
   background: none;
   border: none;
-  font-size: 20px;
   cursor: pointer;
-  color: #555;
+  margin-top: 15px;
   padding: 0;
 `;
 
@@ -74,7 +70,6 @@ export const SpeechBubble = styled.div`
   font-weight: 600;
   color: #333;
   white-space: nowrap;
-  animation: ${fadeInUp} 0.5s ease 0.3s both;
 `;
 
 // ─── 분석 탭 버튼 영역 ────────────────────────────────────────────────────
@@ -84,34 +79,34 @@ export const TabRow = styled.div`
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
-  animation: ${fadeInUp} 0.5s ease 0.2s both;
 `;
 
-export const TabCircle = styled.button<{ $color: string; $active?: boolean }>`
+export const TabCircle = styled.button<{ $active?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 70px;
-  border-radius: 50%;
-  background-color: ${p => p.$color};
+  gap: 13px;
+  width: 93px;
+  height: 133px;
+  border-radius: 100px;
   border: none;
   cursor: pointer;
-  box-shadow: ${p => p.$active
-    ? `0 0 0 3px white, 0 0 0 5px ${p.$color}`
-    : '0 4px 12px rgba(0,0,0,0.15)'};
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  font-size: 22px;
+  // font-size: 22px;
 
   &:active { transform: scale(0.93); }
+  img{
+    height: 70px;
+  }
 `;
 
 export const TabLabel = styled.span`
-  font-size: 11px;
-  font-weight: 600;
+  text-align: center;
+  font-family: Galmuri11;
+  font-size: 14px;
+  font-weight: 400;
   color: #333;
-  margin-top: 6px;
   display: block;
   text-align: center;
 `;
@@ -121,15 +116,25 @@ export const TabItem = styled.div`
   flex-direction: column;
   align-items: center;
 `;
-
+export const Score = styled.div`
+  color: #FFF;
+  text-align: center;
+  -webkit-text-stroke-width: 0.6px;
+  -webkit-text-stroke-color: #106AA9;
+  font-family: Galmuri11;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 22px; /* 110% */
+  margin: 36px 100px;
+`;
 // ─── 섹션 공통 ────────────────────────────────────────────────────────────
 export const FeedbackCard = styled.div<{ $variant?: 'green' | 'pink' }>`
   background: ${p => p.$variant === 'pink' ? '#FFCCCC' : '#DAF0FF'};
   border-radius: 16px;
   padding: 16px 18px;
-  margin-bottom: 16px;
+  margin-bottom: 19px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-  animation: ${fadeInUp} 0.5s ease both;
 `;
 
 export const CardTitle = styled.div`

@@ -21,7 +21,6 @@ export interface FeedbackSection {
   items: string[];
   variant: 'green' | 'pink';
   iconBg: string;
-  iconEmoji: string;
 }
 
 export interface FeedbackData {
