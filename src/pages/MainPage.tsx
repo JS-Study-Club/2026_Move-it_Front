@@ -3,6 +3,7 @@ import type { VideoData, ChallengeData } from '../types';
 import Header from '../components/Header';
 import DanceCard from '../components/DanceCard';
 import ChallengeItem from '../components/ChallengeItem';
+import Nav from '../components/Nav';
 
 import char from '../img/image 78.png';
 
@@ -66,6 +67,8 @@ const MainPage: React.FC = () => {
           {dailyChallenges.map(challenge => <ChallengeItem key={challenge.id} {...challenge} />)}
         </ChallengeList>
       </ContentSection>
+
+      <Nav />
     </MainPageContainer>
   );
 };

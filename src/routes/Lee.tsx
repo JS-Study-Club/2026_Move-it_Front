@@ -7,7 +7,7 @@ export default function Lee() {
   
   return (
         <Routes>
-          <Route path="/" element={<MainPage />} />
+          <Route path="/main" element={<MainPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/feedback" element={<FeedbackPage />} />
         </Routes>

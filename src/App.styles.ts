@@ -16,7 +16,6 @@ export const GlobalStyle = createGlobalStyle`
 body {
   margin: 0;
   padding: 0;
-  display: flex;
   overflow: hidden;
   font-family: 'Galmuri11', sans-serif;
   justify-content: center;
