@@ -18,18 +18,30 @@ export const CardThumb = styled.div`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: aquamarine;
+
+  img{
+    width: 35px;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 export const CardTexts = styled.div`
   display: flex;
   flex-direction: column;
+  min-width: 0;             
+  flex: 1;     
 `;
 
 export const CardTitle = styled.div`
   font-size: 12px;
   color: #333;
   font-weight: 400;
+
+  width: 100%;             /* 너비 제한 */
+  white-space: nowrap;      /* 줄바꿈 금지 */
+  overflow: hidden;         /* 넘치는 부분 숨김 */
+  text-overflow: ellipsis;  /* 넘치면 ... 표시 */
 `;
 
 export const CardSub = styled.div`

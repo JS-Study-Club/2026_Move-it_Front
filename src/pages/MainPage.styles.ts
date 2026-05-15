@@ -15,12 +15,14 @@ export const ProfileSection = styled.div`
 
 export const CharacterContainer = styled.div`
   position: relative;
+  z-index: 2;
   height: 180px;
 `;
 
 export const CharacterImg = styled.img`
   height: 100%;
   image-rendering: pixelated; /* 픽셀 아트 선명하게 */
+  
 `;
 
 export const LevelCardWrapper = styled.div`
@@ -30,6 +32,8 @@ export const LevelCardWrapper = styled.div`
   border-radius: 20px;
   box-shadow: 8px 7px 4px 0 rgba(0, 0, 0, 0.25) inset;
   position: relative;
+  margin-top: -50px; /* 캐릭터 이미지와 겹치도록 */
+  display: flex;
   margin-bottom: 10px;
 `;
 
@@ -92,29 +96,45 @@ export const SectionTitle = styled.h2`
   align-self: stretch;
 `;
 
-export const HorizontalScroll = styled.div` 
+export const HorizontalScroll = styled.div`
   width: 100%;
   display: flex;
   gap: 12px;
-  overflow-x: auto; /* 내용이 넘치면 가로 스크롤바 생성 */
+  overflow-x: auto;
   padding-bottom: 10px;
   scrollbar-width: none;
+  /* 떨림 방지: 스크롤 컨테이너를 별도 레이어로 분리 */
+  will-change: scroll-position;
+  -webkit-overflow-scrolling: touch;
   &::-webkit-scrollbar { display: none; }
 `;
-
+ 
 export const ScrollIndicatorTrack = styled.div`
+  width: 262px;
   height: 4px;
-  background-color: rgba(255,255,255,0.5);
-  border-radius: 2px;
-  margin: 0 auto;
-  width: 60%;
+  background-color: #DAF0FF;
+  border-radius: 30px;
+  margin: 20px auto;
+  position: relative;
+  /* 인디케이터 영역이 스크롤 영향 받지 않도록 레이어 고정 */
+  overflow: hidden;
 `;
-
-export const ScrollIndicatorBar = styled.div<{ $scrollProgress: number }>`
-  width: ${props => props.$scrollProgress}%; /*전달 받은 값*/
+ 
+/* $scrollPercent: 0~100 사이 값
+   트랙(262px)에서 바(100px)를 뺀 162px 범위 내에서 translateX로 이동
+   → left 대신 transform을 사용해 GPU 가속 적용, 레이아웃 재계산 없음 */
+export const ScrollIndicatorBar = styled.div<{ $scrollPercent: number }>`
+  width: 100px;
   height: 100%;
-  background-color: #1a6ab4;
-  border-radius: 2px;
+  background-color: #008DF0;
+  border-radius: 30px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  /* (트랙 262px - 바 100px) = 162px 가동 범위 */
+  transform: translateX(${props => (props.$scrollPercent / 100) * 162}px);
+  /* left 대신 transform 사용 → 리페인트 없이 GPU에서 처리되므로 떨림 없음 */
+  will-change: transform;
 `;
 
 export const ChallengeList = styled.div`
