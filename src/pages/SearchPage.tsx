@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import type { YoutubeVideo, YouTubeItem } from '../types';
 import Header from '../components/Header';
 import search from '../img/search-icon.svg';
 
@@ -28,26 +29,6 @@ const decodeHTMLEntities = (text: string) => {
     textArea.innerHTML = text;
     return textArea.value;
 };
-
-interface YoutubeVideo {
-    id: string;
-    title: string;
-    channelTitle: string;
-    thumbnailUrl: string;
-}
-
-interface YouTubeItem {
-    id: string | { videoId?: string }; // id는 문자열일 수도 있고, 객체일 수도 있음
-    snippet?: {
-        title?: string;
-        channelTitle?: string;
-        thumbnails?: {
-            medium?: {
-                url?: string;
-            };
-        };
-    };
-}
 
 const SearchPage: React.FC = () => {
     const [query, setQuery] = useState('');
