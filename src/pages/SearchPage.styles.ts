@@ -107,7 +107,7 @@ export const ChallengeList = styled.div`
   gap: 10px;
 `;
 
-export const ChallengeRow = styled.div`
+export const ChallengeRows = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;

@@ -3,7 +3,7 @@ import type { ChallengeData } from '../types';
 import {ChallengeItemContainer, CardHeader, CardThumb, CardTexts, CardTitle, CardSub, StartBtn, CardTags} from './ChallengeItem.styles';
 
 const ChallengeItem: React.FC<ChallengeData> = ({ 
-  artist, song, description, thumbnail, participants, difficulty, duration 
+  artist, song, description, thumbnail, participants, duration, uploadDate
 }) => {
   return (
     <ChallengeItemContainer>
@@ -18,9 +18,9 @@ const ChallengeItem: React.FC<ChallengeData> = ({
       </CardHeader>
       <StartBtn>챌린지 시작</StartBtn>
       <CardTags>
-        <span># {participants}명 참여</span>
-        <span># 난이도 {difficulty}</span>
+        <span># 조회수 {participants}회</span>
         <span># {duration} 안무</span>
+        <span># {uploadDate}</span>
       </CardTags>
     </ChallengeItemContainer>
   );
