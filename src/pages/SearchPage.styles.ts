@@ -107,7 +107,7 @@ export const ChallengeList = styled.div`
   gap: 10px;
 `;
 
-export const ChallengeRow = styled.div`
+export const ChallengeRows = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
@@ -160,11 +160,12 @@ export const SelectBtn = styled.button`
   border: none;
   border-radius: 10px;
   padding: 7px 12px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  height: 40px;
 `;
 
 // ─── 로딩 / 에러 ──────────────────────────────────────────────────────────
