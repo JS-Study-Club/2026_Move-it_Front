@@ -3,6 +3,7 @@ import Header from '../components/Header';
 import ChallengeRow from '../components/ChallengeRow';
 import { useYoutubeSearch, usePopularChallenges } from '../hooks/useYoutubeSearch';
 import search from '../img/search-icon.svg';
+import Nav from '../components/Nav';
 
 import {
     SearchPageContainer, SearchBarWrapper, SearchIcon,
@@ -184,6 +185,7 @@ const SearchPage: React.FC = () => {
                     </SectionBlock>
                 </>
             )}
+            <Nav />
         </SearchPageContainer>
     );
 };
