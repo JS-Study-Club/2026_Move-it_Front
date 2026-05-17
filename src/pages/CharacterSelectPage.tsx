@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import backIcon from '../img/backIcon.svg';
+import HeaderSelect from '../components/HeaderSelect';
 import leftArrow from '../img/leftArrow.svg';
 import rightArrow from '../img/rightArrow.svg';
 import StartButton from '../components/StartButton';
 import teachersData from '../data/teachersData.json';
 import Bgimg from '../img/background.png';
 
-import tyt from '../img/tyt.svg';
-import yjt from '../img/yjt.svg';
-import jht from '../img/jht.svg';
-import ygt from '../img/ygt.svg';
-import jrt from '../img/jrt.svg';
+import tyt from '../img/tyt.png';
+import yjt from '../img/yjt.png';
+import jht from '../img/jht.png';
+import ygt from '../img/ygt.png';
+import jrt from '../img/jrt.png';
 
 const teacherImages: Record<number, string> = {
   1: tyt,
@@ -48,7 +48,6 @@ export default function CharacterSelectPage() {
     setCurrentIndex((prev) => (prev + 1) % teachers.length);
   };
 
-  // ✅ 변경: 선택된 캐릭터 정보를 state에 담아서 navigate
   const handleSelect = () => {
     navigate('/lee/main', {
       state: {
@@ -60,9 +59,8 @@ export default function CharacterSelectPage() {
 
   return (
     <PageContainer>
-      <BackButton onClick={() => navigate(-1)}>
-        <img src={backIcon} alt="뒤로가기" />
-      </BackButton>
+
+      <HeaderSelect/>
 
       <TopSection>
         <Title>나만의 코치캐릭터 선택하기</Title>
@@ -106,24 +104,9 @@ const PageContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60px 0 0 0;
+  padding: 45px 16px 16px;
   box-sizing: border-box;
   position: relative;
-`;
-
-const BackButton = styled.button`
-  position: absolute;
-  top: 60px;
-  left: 20px;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-
-  img {
-    width: 24px;
-    height: 24px;
-  }
 `;
 
 const TopSection = styled.div`
@@ -131,7 +114,7 @@ const TopSection = styled.div`
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  margin-top: 36px;
+  margin-top: 22px;
   padding: 0 20px;
 `;
 
@@ -171,11 +154,12 @@ const Name = styled.span`
   text-align: center;
   -webkit-text-stroke-width: 1px;
   -webkit-text-stroke-color: #FFF;
-  font-family: 'Galmuri11', sans-serif;
+  font-family: Galmuri11;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: 22px;
+  line-height: 22px; /* 183.333% */
+  align-self: stretch;
 `;
 
 const CharacterRow = styled.div`
@@ -189,21 +173,20 @@ const CharacterRow = styled.div`
 `;
 
 const ArrowButton = styled.button`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  border: none;
   display: flex;
-  align-items: center;
+  width: 51px;
+  height: 51px;
   justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  box-shadow: 2px 3px 12px rgba(0, 0, 0, 0.15);
+  align-items: center;
+  gap: 10px;
+  border-radius: 100px;
+  border: none;
+  background: linear-gradient(0deg, #DAF0FF 0%, #DAF0FF 100%), #FFF;
 
   img {
-    width: 16px;
-    height: 16px;
+    width: 31px;
+    height: 31px;
+    flex-shrink: 0;
   }
 `;
 

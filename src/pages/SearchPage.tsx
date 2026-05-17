@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from '../components/Header';
 import search from '../img/search-icon.svg';
+import Nav from '../components/Nav';
 
 import {
     SearchPageContainer, SearchBarWrapper, SearchIcon,
@@ -396,6 +397,7 @@ const SearchPage: React.FC = () => {
                     </SectionBlock>
                 </>
             )}
+            <Nav />
         </SearchPageContainer>
     );
 };

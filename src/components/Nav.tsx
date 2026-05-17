@@ -15,7 +15,7 @@ const Nav: React.FC = () => {
     return (
         <BottomNavContainer>
             {/* 1. 홈 */}
-            <StyledNavLink to="/lee">
+            <StyledNavLink to="/lee/main">
                 {({ isActive }) => (
                     <>
                         <IconWrapper $isActive={isActive}>
