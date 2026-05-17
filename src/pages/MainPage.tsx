@@ -22,7 +22,39 @@ const decodeHTMLEntities = (text: string) => {
   return textArea.value;
 };
 
+const getLevelTitle = (level: number): string => {
+  if (level >= 50) return '전설의 댄스 마스터';
+  if (level >= 30) return '무대를 장악하는 댄스 스타';
+  if (level >= 10) return '리듬을 깨우친 댄스 유망주';
+  return '쑥쑥 자라는 댄스신동'; // 1레벨 이상 기본값
+};
+
+// 조회수 숫자를 읽기 쉬운 형태로 변환 (예: 1200000 → 120만명)
+const formatViewCount = (count: string): string => {
+  const num = parseInt(count, 10);
+  if (num >= 100000000) return `${(num / 100000000).toFixed(1)}억`;
+  if (num >= 10000) return `${Math.floor(num / 10000)}만`;
+  if (num >= 1000) return `${Math.floor(num / 1000)}천`;
+  return `${num}회`;
+};
+
+// ISO 8601 duration → "45초" (예: PT1M30S → "90초")
+const parseDuration = (iso: string): string => {
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  const hours = parseInt(match?.[1] ?? '0');
+  const minutes = parseInt(match?.[2] ?? '0');
+  const seconds = parseInt(match?.[3] ?? '0');
+  return `${hours * 3600 + minutes * 60 + seconds}초`;
+};
+
+// ISO 날짜 → "2025.03.12" (예: 2025-03-12T00:00:00Z → "2025.03.12")
+const formatDate = (iso: string): string => {
+  return iso.slice(0, 10).replace(/-/g, '.');
+};
+
+
 const MainPage: React.FC = () => {
+  const currentLevel = 30;
   const [dailyChallenges, setDailyChallenges] = useState<ChallengeData[]>([]);
   const topVideos: VideoData[] = [
     { id: "1", title: 'BANG BANG (Preview) - IVE', date: '2025.11.20', score: 98, thumbnail: thumb1 },
@@ -88,16 +120,50 @@ const MainPage: React.FC = () => {
         if (!res.ok) throw new Error('Failed to fetch YouTube data');
         const data = await res.json();
 
+        // ── 2단계: video id로 statistics(조회수) 추가 호출 ───────────────
+        const ids = data.items
+          .map((item: YouTubeItem) =>
+            typeof item.id === 'string' ? item.id : (item.id?.videoId ?? '')
+          )
+          .join(',');
+
+        const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+        statsUrl.searchParams.set('part', 'statistics,contentDetails,snippet'); 
+        statsUrl.searchParams.set('id', ids);
+        statsUrl.searchParams.set('key', YOUTUBE_API_KEY);
+
+        const statsRes = await fetch(statsUrl.toString());
+        if (!statsRes.ok) throw new Error('Failed to fetch video statistics');
+        const statsData = await statsRes.json();
+
+        // id → viewCount 매핑
+        const viewCountMap: Record<string, { viewCount: string; duration: string; publishedAt: string }> = {};
+        statsData.items.forEach((item: {
+          id: string;
+          statistics: { viewCount: string };
+          contentDetails: { duration: string };
+          snippet: { publishedAt: string };
+        }) => {
+          viewCountMap[item.id] = {
+            viewCount: item.statistics.viewCount ?? '0',
+            duration: item.contentDetails.duration,
+            publishedAt: item.snippet.publishedAt,
+          };
+        });
+
+        // ── 3단계: 두 데이터 합쳐서 ChallengeData 생성 ──────────────────
         const formattedChallenges: ChallengeData[] = data.items.map((item: YouTubeItem) => {
           const resolvedId = typeof item.id === 'string' ? item.id : (item.id?.videoId ?? '');
+          const { viewCount, duration, publishedAt } = viewCountMap[resolvedId] ?? { viewCount: '0', duration: 'PT0S', publishedAt: '' };
           return {
             id: resolvedId,
             artist: decodeHTMLEntities(item.snippet?.channelTitle ?? 'Unknown Artist'),
             song: decodeHTMLEntities(item.snippet?.title ?? 'Unknown Song'),
             thumbnail: item.snippet?.thumbnails?.medium?.url ?? '',
             description: '오늘의 인기 댄스 챌린지!',
-            difficulty: 'Normal',
-            duration: 'Shorts',
+            participants: formatViewCount(viewCount),  // 조회수 → "120만명" 형태
+            uploadDate: formatDate(publishedAt),
+            duration: parseDuration(duration),
           };
         });
 
@@ -119,7 +185,7 @@ const MainPage: React.FC = () => {
         <LevelCardWrapper>
           <LevelCardInner>
             <LevelInfoArea>
-              <LevelText>LV. 50 전설의 댄스 마스터</LevelText>
+              <LevelText>LV.{currentLevel} {getLevelTitle(currentLevel)}</LevelText>
               <ProgressTrack>
                 <ProgressFill $progress={60} />
               </ProgressTrack>

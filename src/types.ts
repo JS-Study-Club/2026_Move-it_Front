@@ -13,7 +13,7 @@ export interface ChallengeData{
     thumbnail: string;
     description: string;
     participants: string;
-    difficulty: 'Easy' | 'Normal' | 'Hard';
+    uploadDate: string;
     duration: string;
 }
 export interface YoutubeVideo {

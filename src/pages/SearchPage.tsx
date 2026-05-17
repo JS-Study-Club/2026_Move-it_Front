@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import type { YoutubeVideo, YouTubeItem } from '../types';
+import React, { useState, useCallback } from 'react';
 import Header from '../components/Header';
+import ChallengeRow from '../components/ChallengeRow';
+import { useYoutubeSearch, usePopularChallenges } from '../hooks/useYoutubeSearch';
 import search from '../img/search-icon.svg';
 
 import {
     SearchPageContainer, SearchBarWrapper, SearchIcon,
     SearchInput, ClearBtn, SectionBlock, SectionTitle, TagRow, RecentTag, DeleteBtn, SuggestTag, ChallengeList,
-    ChallengeRow, RankNumber, ChallengeThumbnail, ChallengeInfo, ChallengeName, ChallengeArtist,
-    SelectBtn, StatusText, ThumbnailPlaceholder, NoResultText,
+    SelectBtn, StatusText, NoResultText,
 } from './SearchPage.styles';
-
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
 // 추천 검색어 (기획 단계에서 큐레이션)
 const SUGGESTED_TAGS = [
@@ -18,32 +16,12 @@ const SUGGESTED_TAGS = [
     '신나는', '색시한', 'K-POP',
 ];
 
-// localStorage 키
+// 최근 검색어 localStorage 키
 const RECENT_SEARCHES_KEY = 'moveit_recent_searches';
 const MAX_RECENT = 8;
 
-/* 이미지에 보이는 &#39;나 &amp; 같은 문자는 YouTube API가 데이터를 넘겨줄 때 사용하는 HTML 엔티티(Entity)입니다. 
-/* 브라우저가 이것을 일반 텍스트(예: '나 &)로 인식하게 하려면 렌더링 전에 디코딩(Decoding) 과정이 필요합니다. */
-const decodeHTMLEntities = (text: string) => {
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
-    return textArea.value;
-};
-
 const SearchPage: React.FC = () => {
     const [query, setQuery] = useState('');
-    const [popularChallenges, setPopularChallenges] = useState<YoutubeVideo[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const [nextPageToken, setNextPageToken] = useState<string | null>(null);
-
-    // ── 실시간 검색 결과 ──────────────────────────────────────────────────
-    const [searchResults, setSearchResults] = useState<YoutubeVideo[]>([]);
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [searchError, setSearchError] = useState<string | null>(null);
-    const [hasSearched, setHasSearched] = useState(false); // 결과 없음 표시 타이밍 제어용
-    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // ── 최근 검색어: localStorage에서 불러오기 ──────────────────────────────
     const [recentSearches, setRecentSearches] = useState<string[]>(() => {
@@ -73,6 +51,9 @@ const SearchPage: React.FC = () => {
         saveRecentSearches(updated);
     };
 
+    const { searchResults, searchLoading, searchError, hasSearched, nextPageToken, searchYoutube, clearSearch } = useYoutubeSearch(query);
+    const { popularChallenges, loading, error } = usePopularChallenges();
+
     // ── 검색 실행 (태그·최근검색어 클릭 시) ─────────────────────────────
     const handleSearch = useCallback(
         (keyword: string) => {
@@ -90,123 +71,6 @@ const SearchPage: React.FC = () => {
         }
     };
 
-    const searchYoutube = async (searchKeyword: string, pageToken: string | null = null) => {
-        setSearchLoading(true);
-        setSearchError(null);
-        setHasSearched(true);
-        try {
-            const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
-            searchUrl.searchParams.set('part', 'snippet');
-            searchUrl.searchParams.set('q', `${searchKeyword} kpop dance challenge`);
-            searchUrl.searchParams.set('type', 'video');
-            searchUrl.searchParams.set('videoCategoryId', '10');
-            searchUrl.searchParams.set('order', 'viewCount');
-            searchUrl.searchParams.set('maxResults', '10');
-            searchUrl.searchParams.set('regionCode', 'KR');
-            searchUrl.searchParams.set('relevanceLanguage', 'ko');
-            searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
-
-            if (pageToken) {
-                searchUrl.searchParams.set('pageToken', pageToken);
-            }
-
-            const res = await fetch(searchUrl.toString());
-            if (!res.ok) throw new Error(`YouTube API 오류: ${res.status}`);
-
-            const data = await res.json();
-            const videos: YoutubeVideo[] = (data.items || []).map((item: YouTubeItem) => {
-                const resolvedId = typeof item.id === 'string' ? item.id : (item.id?.videoId ?? '');
-                return {
-                    id: resolvedId,
-                    title: item.snippet?.title ?? '',
-                    channelTitle: item.snippet?.channelTitle ?? '',
-                    thumbnailUrl: item.snippet?.thumbnails?.medium?.url ?? '',
-                };
-            });
-
-            if (pageToken) { // 🌟 1. 티켓(pageToken)이 있었다면 이어붙이고, 없었다면 새로 덮어쓰기!
-                setSearchResults(prev => [...prev, ...videos]);
-            } else {
-                setSearchResults(videos);
-            }
-
-            // 🌟 2. 다음 페이지 티켓 저장하기 (그래야 다음에 또 더 보기를 누를 수 있음)
-            setNextPageToken(data.nextPageToken || null);
-
-        } catch (err) {
-            setSearchError('검색 중 오류가 발생했습니다.');
-            setSearchResults([]);
-            console.error(err);
-        } finally {
-            setSearchLoading(false);
-        }
-    }
-
-    // ── 실시간 검색: query 변경 → debounce 300ms → YouTube API 호출 ──────
-    useEffect(() => {
-        // 입력이 비면 검색 결과 초기화 → 기본 화면(인기 챌린지)으로 복귀
-        if (!query.trim()) {
-            if (debounceTimer.current) clearTimeout(debounceTimer.current);
-            return;
-        }
-
-        if (debounceTimer.current) clearTimeout(debounceTimer.current);
-
-        debounceTimer.current = setTimeout(async () => {
-            searchYoutube(query, null);
-        }, 2000);
-
-        return () => {
-            if (debounceTimer.current) clearTimeout(debounceTimer.current);
-        };
-    }, [query]);
-
-    // ── YouTube Data API v3: 인기 챌린지 ─────────────────────────────────
-    useEffect(() => {
-        const fetchPopularChallenges = async () => {
-            try {
-                // K-POP 챌린지 관련 인기 영상 검색
-                const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
-                searchUrl.searchParams.set('part', 'snippet');
-                searchUrl.searchParams.set('q', 'kpop dance challenge 2025');
-                searchUrl.searchParams.set('type', 'video');
-                searchUrl.searchParams.set('videoCategoryId', '10'); // Music
-                searchUrl.searchParams.set('order', 'viewCount');
-                searchUrl.searchParams.set('maxResults', '5');
-                searchUrl.searchParams.set('regionCode', 'KR');
-                searchUrl.searchParams.set('relevanceLanguage', 'ko');
-                searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
-
-                const res = await fetch(searchUrl.toString());
-                if (!res.ok) throw new Error(`YouTube API 오류: ${res.status}`);
-
-                const data = await res.json();
-
-                const videos: YoutubeVideo[] = (data.items || []).map((item: YouTubeItem) => {
-                    // 유튜브 API는 검색 결과일 때는 id가 객체이고, 인기 영상일 때는 id가 문자열
-                    const resolvedId = typeof item.id === 'string' ? item.id : (item.id?.videoId ?? '');
-
-                    return {
-                        id: resolvedId,
-                        title: item.snippet?.title ?? '',
-                        channelTitle: item.snippet?.channelTitle ?? '',
-                        thumbnailUrl: item.snippet?.thumbnails?.medium?.url ?? '',
-                    };
-                });
-
-                setPopularChallenges(videos);
-            } catch (err) {
-                setError('인기 챌린지를 불러오지 못했습니다.');
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPopularChallenges();
-    }, []);
-
-    // ── 렌더링 ────────────────────────────────────────────────────────────
     return (
         <SearchPageContainer>
             <Header />
@@ -223,11 +87,7 @@ const SearchPage: React.FC = () => {
                         setQuery(val);
 
                         // 🌟 글자가 모두 지워지면 여기서 즉시 상태를 비워줍니다!
-                        if (!val.trim()) {
-                            setSearchResults([]);
-                            setHasSearched(false);
-                            setSearchError(null);
-                        }
+                        if (!val.trim()) { clearSearch(); }
                     }}
                     onKeyDown={handleKeyDown}
                 />
@@ -237,9 +97,7 @@ const SearchPage: React.FC = () => {
                         setQuery('');
 
                         // 🌟 X 버튼을 눌렀을 때도 여기서 즉시 상태를 비워줍니다!
-                        setSearchResults([]);
-                        setHasSearched(false);
-                        setSearchError(null);
+                        clearSearch();
                     }}>✕</ClearBtn>
                 )}
             </SearchBarWrapper>
@@ -261,30 +119,7 @@ const SearchPage: React.FC = () => {
                     {!searchLoading && searchResults.length > 0 && (
                         <ChallengeList>
                             {searchResults.map((video, idx) => (
-                                <ChallengeRow key={`${video.id}-${idx}`}>
-                                    {video.thumbnailUrl ? (
-                                        <ChallengeThumbnail
-                                            src={video.thumbnailUrl}
-                                            alt={video.title}
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                            }}
-                                        />
-                                    ) : (
-                                        <ThumbnailPlaceholder>🎵</ThumbnailPlaceholder>
-                                    )}
-                                    <ChallengeInfo>
-                                        <ChallengeName>{decodeHTMLEntities(video.title)}</ChallengeName>
-                                        <ChallengeArtist>{decodeHTMLEntities(video.channelTitle)}</ChallengeArtist>
-                                    </ChallengeInfo>
-                                    <SelectBtn
-                                        onClick={() =>
-                                            window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank')
-                                        }
-                                    >
-                                        곡 선택하기
-                                    </SelectBtn>
-                                </ChallengeRow>
+                                <ChallengeRow key={`${video.id}-${idx}`} video={video} />
                             ))}
 
                             {nextPageToken && (
@@ -297,7 +132,6 @@ const SearchPage: React.FC = () => {
                 </SectionBlock>
 
             ) : (
-                /* ── 기본 화면: 입력값이 없을 때 ── */
                 <>
                     {/* 최근 검색어 */}
                     {recentSearches.length > 0 && (
@@ -343,34 +177,7 @@ const SearchPage: React.FC = () => {
                         {!loading && !error && (
                             <ChallengeList>
                                 {popularChallenges.map((video, idx) => (
-                                    <ChallengeRow key={`${video.id}-${idx}`}>
-                                        <RankNumber>{idx + 1}</RankNumber>
-
-                                        {video.thumbnailUrl ? (
-                                            <ChallengeThumbnail
-                                                src={video.thumbnailUrl}
-                                                alt={video.title}
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).style.display = 'none';
-                                                }}
-                                            />
-                                        ) : (
-                                            <ThumbnailPlaceholder>🎵</ThumbnailPlaceholder>
-                                        )}
-
-                                        <ChallengeInfo>
-                                            <ChallengeName>{decodeHTMLEntities(video.title)}</ChallengeName>
-                                            <ChallengeArtist>{decodeHTMLEntities(video.channelTitle)}</ChallengeArtist>
-                                        </ChallengeInfo>
-
-                                        <SelectBtn
-                                            onClick={() =>
-                                                window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank')
-                                            }
-                                        >
-                                            곡 선택하기
-                                        </SelectBtn>
-                                    </ChallengeRow>
+                                    <ChallengeRow key={`${video.id}-${idx}`} video={video} rank={idx + 1} />
                                 ))}
                             </ChallengeList>
                         )}
