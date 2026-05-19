@@ -11,6 +11,12 @@ import thumb1 from '../img/thumb1.png';
 import thumb2 from '../img/thumb2.png';
 import defaultChar from '../img/tyt.png';
 
+import tyt from '../img/tyt.png';
+import yjt from '../img/yjt.png';
+import jht from '../img/jht.png';
+import ygt from '../img/ygt.png';
+import jrt from '../img/jrt.png';
+
 import {
   MainPageContainer,
   ProfileSection,
@@ -33,13 +39,23 @@ import {
 
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
+const teacherImages: Record<number, string> = {
+  1: tyt,
+  2: yjt,
+  3: jht,
+  4: ygt,
+  5: jrt,
+};
+
+interface Teacher {
+  id: number;
+  name: string;
+  hashtag: string;
+  comment: string;
+}
+
 interface LocationState {
-  teacher?: {
-    id: number;
-    name: string;
-    hashtag: string;
-    comment: string;
-  };
+  teacher?: Teacher;
   teacherImage?: string;
 }
 
@@ -56,55 +72,60 @@ const getLevelTitle = (level: number): string => {
   return '쑥쑥 자라는 댄스신동';
 };
 
-// 조회수 포맷
 const formatViewCount = (count: string): string => {
   const num = parseInt(count, 10);
-
-  if (num >= 100000000) {
-    return `${(num / 100000000).toFixed(1)}억`;
-  }
-
-  if (num >= 10000) {
-    return `${Math.floor(num / 10000)}만`;
-  }
-
-  if (num >= 1000) {
-    return `${Math.floor(num / 1000)}천`;
-  }
-
+  if (num >= 100000000) return `${(num / 100000000).toFixed(1)}억`;
+  if (num >= 10000) return `${Math.floor(num / 10000)}만`;
+  if (num >= 1000) return `${Math.floor(num / 1000)}천`;
   return `${num}회`;
 };
 
-// ISO 8601 duration → "90초"
 const parseDuration = (iso: string): string => {
   const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-
   const hours = parseInt(match?.[1] ?? '0');
   const minutes = parseInt(match?.[2] ?? '0');
   const seconds = parseInt(match?.[3] ?? '0');
-
   return `${hours * 3600 + minutes * 60 + seconds}초`;
 };
 
-// 날짜 포맷
 const formatDate = (iso: string): string => {
   return iso.slice(0, 10).replace(/-/g, '.');
+};
+
+// localStorage에서 저장된 캐릭터 불러오기
+const getSavedTeacher = (): Teacher | undefined => {
+  try {
+    const saved = localStorage.getItem('selectedTeacher');
+    return saved ? JSON.parse(saved) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const getSavedTeacherImage = (): string | undefined => {
+  try {
+    const savedId = localStorage.getItem('selectedTeacherImageId');
+    return savedId ? teacherImages[Number(savedId)] : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 const MainPage: React.FC = () => {
   const location = useLocation();
 
-  const { teacher, teacherImage } =
+  const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
 
-  // 선택된 캐릭터 없으면 기본 이미지 사용
+  // location.state가 있으면 우선 사용, 없으면 localStorage에서 복원
+  const teacher = stateTeacher ?? getSavedTeacher();
+  const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
+
   const charImg = teacherImage ?? defaultChar;
 
   const currentLevel = 30;
 
-  const [dailyChallenges, setDailyChallenges] = useState<
-    ChallengeData[]
-  >([]);
+  const [dailyChallenges, setDailyChallenges] = useState<ChallengeData[]>([]);
 
   const topVideos: VideoData[] = [
     {
@@ -130,15 +151,12 @@ const MainPage: React.FC = () => {
     },
   ];
 
-  const sortedVideos = [...topVideos].sort(
-    (a, b) => b.score - a.score
-  );
+  const sortedVideos = [...topVideos].sort((a, b) => b.score - a.score);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // 스크롤 인디케이터
   useEffect(() => {
     const scrollEl = scrollRef.current;
     const barEl = barRef.current;
@@ -154,7 +172,6 @@ const MainPage: React.FC = () => {
         if (!scrollEl || !barEl) return;
 
         const { scrollLeft, scrollWidth, clientWidth } = scrollEl;
-
         const scrollable = scrollWidth - clientWidth;
 
         if (scrollable <= 0) return;
@@ -162,39 +179,24 @@ const MainPage: React.FC = () => {
         const percent = scrollLeft / scrollable;
         const maxMove = 262 - 100;
 
-        barEl.style.transform = `translateX(${
-          percent * maxMove
-        }px)`;
+        barEl.style.transform = `translateX(${percent * maxMove}px)`;
       });
     };
 
-    scrollEl.addEventListener('scroll', onScroll, {
-      passive: true,
-    });
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
 
     return () => {
       scrollEl.removeEventListener('scroll', onScroll);
-
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
-  // 유튜브 추천 챌린지 가져오기
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        // 1차 요청
-        const searchUrl = new URL(
-          'https://www.googleapis.com/youtube/v3/search'
-        );
-
+        const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
         searchUrl.searchParams.set('part', 'snippet');
-        searchUrl.searchParams.set(
-          'q',
-          'kpop dance challenge'
-        );
+        searchUrl.searchParams.set('q', 'kpop dance challenge');
         searchUrl.searchParams.set('type', 'video');
         searchUrl.searchParams.set('videoCategoryId', '10');
         searchUrl.searchParams.set('order', 'viewCount');
@@ -204,53 +206,27 @@ const MainPage: React.FC = () => {
         searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
 
         const res = await fetch(searchUrl.toString());
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch YouTube data');
-        }
+        if (!res.ok) throw new Error('Failed to fetch YouTube data');
 
         const data = await res.json();
 
-        // video ids
         const ids = data.items
           .map((item: YouTubeItem) =>
-            typeof item.id === 'string'
-              ? item.id
-              : item.id?.videoId ?? ''
+            typeof item.id === 'string' ? item.id : item.id?.videoId ?? ''
           )
           .join(',');
 
-        // 2차 요청 (조회수 + duration)
-        const statsUrl = new URL(
-          'https://www.googleapis.com/youtube/v3/videos'
-        );
-
-        statsUrl.searchParams.set(
-          'part',
-          'statistics,contentDetails,snippet'
-        );
-
+        const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
+        statsUrl.searchParams.set('part', 'statistics,contentDetails,snippet');
         statsUrl.searchParams.set('id', ids);
         statsUrl.searchParams.set('key', YOUTUBE_API_KEY);
 
         const statsRes = await fetch(statsUrl.toString());
-
-        if (!statsRes.ok) {
-          throw new Error(
-            'Failed to fetch video statistics'
-          );
-        }
+        if (!statsRes.ok) throw new Error('Failed to fetch video statistics');
 
         const statsData = await statsRes.json();
 
-        const viewCountMap: Record<
-          string,
-          {
-            viewCount: string;
-            duration: string;
-            publishedAt: string;
-          }
-        > = {};
+        const viewCountMap: Record<string, { viewCount: string; duration: string; publishedAt: string }> = {};
 
         statsData.items.forEach(
           (item: {
@@ -260,51 +236,34 @@ const MainPage: React.FC = () => {
             snippet: { publishedAt: string };
           }) => {
             viewCountMap[item.id] = {
-              viewCount:
-                item.statistics.viewCount ?? '0',
+              viewCount: item.statistics.viewCount ?? '0',
               duration: item.contentDetails.duration,
               publishedAt: item.snippet.publishedAt,
             };
           }
         );
 
-        // 최종 데이터 가공
-        const formattedChallenges: ChallengeData[] =
-          data.items.map((item: YouTubeItem) => {
-            const resolvedId =
-              typeof item.id === 'string'
-                ? item.id
-                : item.id?.videoId ?? '';
+        const formattedChallenges: ChallengeData[] = data.items.map((item: YouTubeItem) => {
+          const resolvedId =
+            typeof item.id === 'string' ? item.id : item.id?.videoId ?? '';
 
-            const {
-              viewCount,
-              duration,
-              publishedAt,
-            } = viewCountMap[resolvedId] ?? {
-              viewCount: '0',
-              duration: 'PT0S',
-              publishedAt: '',
-            };
+          const { viewCount, duration, publishedAt } = viewCountMap[resolvedId] ?? {
+            viewCount: '0',
+            duration: 'PT0S',
+            publishedAt: '',
+          };
 
-            return {
-              id: resolvedId,
-              artist: decodeHTMLEntities(
-                item.snippet?.channelTitle ??
-                  'Unknown Artist'
-              ),
-              song: decodeHTMLEntities(
-                item.snippet?.title ?? 'Unknown Song'
-              ),
-              thumbnail:
-                item.snippet?.thumbnails?.medium?.url ??
-                '',
-              description: '오늘의 인기 댄스 챌린지!',
-              participants:
-                formatViewCount(viewCount),
-              uploadDate: formatDate(publishedAt),
-              duration: parseDuration(duration),
-            };
-          });
+          return {
+            id: resolvedId,
+            artist: decodeHTMLEntities(item.snippet?.channelTitle ?? 'Unknown Artist'),
+            song: decodeHTMLEntities(item.snippet?.title ?? 'Unknown Song'),
+            thumbnail: item.snippet?.thumbnails?.medium?.url ?? '',
+            description: '오늘의 인기 댄스 챌린지!',
+            participants: formatViewCount(viewCount),
+            uploadDate: formatDate(publishedAt),
+            duration: parseDuration(duration),
+          };
+        });
 
         setDailyChallenges(formattedChallenges);
       } catch (error) {
@@ -319,21 +278,16 @@ const MainPage: React.FC = () => {
     <MainPageContainer>
       <Header />
 
-      {/* 프로필 영역 */}
       <ProfileSection>
         <CharacterContainer>
-          <CharacterImg
-            src={charImg}
-            alt={teacher?.name ?? 'character'}
-          />
+          <CharacterImg src={charImg} alt={teacher?.name ?? 'character'} />
         </CharacterContainer>
 
         <LevelCardWrapper>
           <LevelCardInner>
             <LevelInfoArea>
               <LevelText>
-                LV.{currentLevel}{' '}
-                {getLevelTitle(currentLevel)}
+                LV.{currentLevel} {getLevelTitle(currentLevel)}
               </LevelText>
 
               <ProgressTrack>
@@ -346,41 +300,26 @@ const MainPage: React.FC = () => {
         </LevelCardWrapper>
       </ProfileSection>
 
-      {/* 점수 높은 영상 */}
       <ContentSection>
-        <SectionTitle>
-          높은 점수를 받은 댄스 영상
-        </SectionTitle>
+        <SectionTitle>높은 점수를 받은 댄스 영상</SectionTitle>
 
         <HorizontalScroll ref={scrollRef}>
           {sortedVideos.map((video) => (
-            <DanceCard
-              key={video.id}
-              {...video}
-            />
+            <DanceCard key={video.id} {...video} />
           ))}
         </HorizontalScroll>
 
         <ScrollIndicatorTrack>
-          <ScrollIndicatorBar
-            ref={barRef}
-            $scrollPercent={0}
-          />
+          <ScrollIndicatorBar ref={barRef} $scrollPercent={0} />
         </ScrollIndicatorTrack>
       </ContentSection>
 
-      {/* 추천 챌린지 */}
       <ContentSection>
-        <SectionTitle>
-          오늘의 추천 댄스 챌린지
-        </SectionTitle>
+        <SectionTitle>오늘의 추천 댄스 챌린지</SectionTitle>
 
         <ChallengeList>
           {dailyChallenges.map((challenge) => (
-            <ChallengeItem
-              key={challenge.id}
-              {...challenge}
-            />
+            <ChallengeItem key={challenge.id} {...challenge} />
           ))}
         </ChallengeList>
       </ContentSection>

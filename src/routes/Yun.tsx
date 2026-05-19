@@ -3,7 +3,6 @@ import FirstPage from '../pages/FirstPage';
 import LoginPage from '../pages/LoginPage';
 import SignupPage from '../pages/SignupPage';
 import CharacterSelectPage from '../pages/CharacterSelectPage';
-import MyPage from '../pages/MyPage';
 import CameraPage from '../pages/CameraPage';
 
 export default function Yun() {
@@ -15,8 +14,6 @@ export default function Yun() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/select" element={<CharacterSelectPage />} />
           <Route path="/camera" element={<CameraPage />} />
-
-          {/* <Route path="/mypage" element={<MyPage />} /> */}
         </Routes>
         
   )

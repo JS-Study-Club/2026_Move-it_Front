@@ -49,6 +49,10 @@ export default function CharacterSelectPage() {
   };
 
   const handleSelect = () => {
+    // localStorage에 선택한 캐릭터 저장
+    localStorage.setItem('selectedTeacher', JSON.stringify(current));
+    localStorage.setItem('selectedTeacherImageId', String(current.id));
+
     navigate('/lee/main', {
       state: {
         teacher: current,
@@ -158,7 +162,7 @@ const Name = styled.span`
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
-  line-height: 22px; /* 183.333% */
+  line-height: 22px;
   align-self: stretch;
 `;
 
