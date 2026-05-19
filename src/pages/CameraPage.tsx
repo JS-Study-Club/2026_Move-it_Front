@@ -526,6 +526,7 @@ const CameraPage = () => {
 
     setCountdown(3);
     let currentCount = 3;
+    
 
     countdownTimerRef.current = window.setInterval(() => {
       currentCount -= 1;

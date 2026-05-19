@@ -61,7 +61,7 @@ const Nav: React.FC = () => {
 
       {/* 3. 댄스 */}
       <StyledNavLink
-        to="/lee/dance"
+        to="/yun/camera"
         className="nav-item"
       >
         {({ isActive }) => (
@@ -85,7 +85,7 @@ const Nav: React.FC = () => {
 
       {/* 4. 마이 */}
       <StyledNavLink
-        to="/lee/my"
+        to="/yun/mypage"
         className="nav-item"
       >
         {({ isActive }) => (

@@ -1,3 +1,4 @@
+import { useState } from 'react'; // useState 추가
 import styled from 'styled-components';
 import Logo from '../img/logo.png';
 import Bgimg from '../img/background.png';
@@ -8,9 +9,18 @@ import { useNavigate } from 'react-router-dom';
 export default function LoginPage() {
   const navigate = useNavigate();
 
+  // 1. 아이디와 비밀번호 상태 관리
+  const [id, setId] = useState('');
+  const [password, setPassword] = useState('');
+
   const handleLogin = () => {
-    console.log("로그인 시도!");
-    // 핵심 수정 부분: /home 대신 /select로 경로 변경
+    // 2. 유효성 검사 (공백 제거 후 빈 값인지 확인)
+    if (!id.trim() || !password.trim()) {
+      alert("아이디와 비밀번호를 모두 입력해주세요!");
+      return; // 입력되지 않았다면 여기서 함수 종료
+    }
+
+    console.log("로그인 시도!", { id, password });
     navigate('/yun/select'); 
   };
 
@@ -21,8 +31,20 @@ export default function LoginPage() {
       </TopSection>
 
       <FormSection>
-        <InputField label="아이디" placeholder="아이디를 입력해주세요." />
-        <InputField label="비밀번호" placeholder="비밀번호를 입력해주세요." type="password" />
+        {/* 3. value와 onChange 연결 */}
+        <InputField 
+          label="아이디" 
+          placeholder="아이디를 입력해주세요." 
+          value={id}
+          onChange={(e) => setId(e.target.value)}
+        />
+        <InputField 
+          label="비밀번호" 
+          placeholder="비밀번호를 입력해주세요." 
+          type="password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
         <PlaceholderField>
           <InputField label="" placeholder="" aria-hidden="true"/>
         </PlaceholderField>
@@ -44,7 +66,6 @@ export default function LoginPage() {
 }
 
 // --- Styled Components (기존과 동일) ---
-
 const PageContainer = styled.div`
   width: 100%;
   height: 100vh;
