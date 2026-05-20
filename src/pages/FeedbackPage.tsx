@@ -83,8 +83,7 @@ const TAB_CONFIG = [
 
 type TabKey = (typeof TAB_CONFIG)[number]['key'];
 
-// ─── 컴포넌트 ──────────────────────────────────────────────────────────────
-const FeedbackPage: React.FC = () => {
+export default function FeedbackPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabKey>('rhythm');
 
@@ -165,5 +164,3 @@ const FeedbackPage: React.FC = () => {
         </FeedbackPageContainer>
     );
 };
-
-export default FeedbackPage;

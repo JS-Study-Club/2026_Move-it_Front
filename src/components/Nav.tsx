@@ -85,7 +85,7 @@ const Nav: React.FC = () => {
 
       {/* 4. 마이 */}
       <StyledNavLink
-        to="/yun/mypage"
+        to="/lee/mypage"
         className="nav-item"
       >
         {({ isActive }) => (

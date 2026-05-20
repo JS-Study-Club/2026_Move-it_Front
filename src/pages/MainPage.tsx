@@ -1,75 +1,27 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import type { VideoData, ChallengeData, YouTubeItem } from '../types';
+import { useEffect, useState } from 'react';
+import type { ChallengeData, YouTubeItem } from '../types';
 
 import Header from '../components/Header';
-import DanceCard from '../components/DanceCard';
 import ChallengeItem from '../components/ChallengeItem';
 import Nav from '../components/Nav';
 
-import thumb1 from '../img/thumb1.png';
-import thumb2 from '../img/thumb2.png';
-import defaultChar from '../img/tyt.png';
-
-import tyt from '../img/tyt.png';
-import yjt from '../img/yjt.png';
-import jht from '../img/jht.png';
-import ygt from '../img/ygt.png';
-import jrt from '../img/jrt.png';
+// 1. 컴포넌트 임포트
+import MyLevelCard from '../components/MyLevelCard';
+import RecentDanceSection from '../components/RecentDanceSection';
 
 import {
   MainPageContainer,
-  ProfileSection,
-  CharacterContainer,
-  CharacterImg,
-  LevelCardWrapper,
-  LevelCardInner,
-  LevelInfoArea,
-  LevelText,
-  ProgressTrack,
-  ProgressFill,
-  PracticeBtn,
   ContentSection,
   SectionTitle,
-  HorizontalScroll,
-  ScrollIndicatorTrack,
-  ScrollIndicatorBar,
   ChallengeList,
 } from './MainPage.styles';
 
 const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
 
-const teacherImages: Record<number, string> = {
-  1: tyt,
-  2: yjt,
-  3: jht,
-  4: ygt,
-  5: jrt,
-};
-
-interface Teacher {
-  id: number;
-  name: string;
-  hashtag: string;
-  comment: string;
-}
-
-interface LocationState {
-  teacher?: Teacher;
-  teacherImage?: string;
-}
-
 const decodeHTMLEntities = (text: string) => {
   const textArea = document.createElement('textarea');
   textArea.innerHTML = text;
   return textArea.value;
-};
-
-const getLevelTitle = (level: number): string => {
-  if (level >= 50) return '전설의 댄스 마스터';
-  if (level >= 30) return '무대를 장악하는 댄스 스타';
-  if (level >= 10) return '리듬을 깨우친 댄스 유망주';
-  return '쑥쑥 자라는 댄스신동';
 };
 
 const formatViewCount = (count: string): string => {
@@ -92,104 +44,8 @@ const formatDate = (iso: string): string => {
   return iso.slice(0, 10).replace(/-/g, '.');
 };
 
-// localStorage에서 저장된 캐릭터 불러오기
-const getSavedTeacher = (): Teacher | undefined => {
-  try {
-    const saved = localStorage.getItem('selectedTeacher');
-    return saved ? JSON.parse(saved) : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const getSavedTeacherImage = (): string | undefined => {
-  try {
-    const savedId = localStorage.getItem('selectedTeacherImageId');
-    return savedId ? teacherImages[Number(savedId)] : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const MainPage: React.FC = () => {
-  const location = useLocation();
-
-  const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
-    (location.state as LocationState) ?? {};
-
-  // location.state가 있으면 우선 사용, 없으면 localStorage에서 복원
-  const teacher = stateTeacher ?? getSavedTeacher();
-  const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
-
-  const charImg = teacherImage ?? defaultChar;
-
-  const currentLevel = 30;
-
+export default function MainPage() {
   const [dailyChallenges, setDailyChallenges] = useState<ChallengeData[]>([]);
-
-  const topVideos: VideoData[] = [
-    {
-      id: '1',
-      title: 'BANG BANG (Preview) - IVE',
-      date: '2025.11.20',
-      score: 98,
-      thumbnail: thumb1,
-    },
-    {
-      id: '2',
-      title: '아웅다웅 (feat. TimeFever)',
-      date: '2026.01.07',
-      score: 90,
-      thumbnail: thumb2,
-    },
-    {
-      id: '3',
-      title: 'Supernova - aespa',
-      date: '2025.11.10',
-      score: 80,
-      thumbnail: thumb2,
-    },
-  ];
-
-  const sortedVideos = [...topVideos].sort((a, b) => b.score - a.score);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const scrollEl = scrollRef.current;
-    const barEl = barRef.current;
-
-    if (!scrollEl || !barEl) return;
-
-    const onScroll = () => {
-      if (rafRef.current !== null) return;
-
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-
-        if (!scrollEl || !barEl) return;
-
-        const { scrollLeft, scrollWidth, clientWidth } = scrollEl;
-        const scrollable = scrollWidth - clientWidth;
-
-        if (scrollable <= 0) return;
-
-        const percent = scrollLeft / scrollable;
-        const maxMove = 262 - 100;
-
-        barEl.style.transform = `translateX(${percent * maxMove}px)`;
-      });
-    };
-
-    scrollEl.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      scrollEl.removeEventListener('scroll', onScroll);
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -244,14 +100,8 @@ const MainPage: React.FC = () => {
         );
 
         const formattedChallenges: ChallengeData[] = data.items.map((item: YouTubeItem) => {
-          const resolvedId =
-            typeof item.id === 'string' ? item.id : item.id?.videoId ?? '';
-
-          const { viewCount, duration, publishedAt } = viewCountMap[resolvedId] ?? {
-            viewCount: '0',
-            duration: 'PT0S',
-            publishedAt: '',
-          };
+          const resolvedId = typeof item.id === 'string' ? item.id : item.id?.videoId ?? '';
+          const { viewCount, duration, publishedAt } = viewCountMap[resolvedId] ?? { viewCount: '0', duration: 'PT0S', publishedAt: '' };
 
           return {
             id: resolvedId,
@@ -278,45 +128,15 @@ const MainPage: React.FC = () => {
     <MainPageContainer>
       <Header />
 
-      <ProfileSection>
-        <CharacterContainer>
-          <CharacterImg src={charImg} alt={teacher?.name ?? 'character'} />
-        </CharacterContainer>
+      {/* 2. 팀원의 캐릭터 로직이 내장된 레벨 카드 컴포넌트 호출 */}
+      <MyLevelCard showPracticeBtn={true} />
 
-        <LevelCardWrapper>
-          <LevelCardInner>
-            <LevelInfoArea>
-              <LevelText>
-                LV.{currentLevel} {getLevelTitle(currentLevel)}
-              </LevelText>
+      {/* 3. 최근 영상 컴포넌트 호출 */}
+      <RecentDanceSection title="높은 점수를 받은 댄스 영상" />
 
-              <ProgressTrack>
-                <ProgressFill $progress={60} />
-              </ProgressTrack>
-            </LevelInfoArea>
-
-            <PracticeBtn>연습</PracticeBtn>
-          </LevelCardInner>
-        </LevelCardWrapper>
-      </ProfileSection>
-
-      <ContentSection>
-        <SectionTitle>높은 점수를 받은 댄스 영상</SectionTitle>
-
-        <HorizontalScroll ref={scrollRef}>
-          {sortedVideos.map((video) => (
-            <DanceCard key={video.id} {...video} />
-          ))}
-        </HorizontalScroll>
-
-        <ScrollIndicatorTrack>
-          <ScrollIndicatorBar ref={barRef} $scrollPercent={0} />
-        </ScrollIndicatorTrack>
-      </ContentSection>
-
+      {/* 4. 추천 챌린지 렌더링 */}
       <ContentSection>
         <SectionTitle>오늘의 추천 댄스 챌린지</SectionTitle>
-
         <ChallengeList>
           {dailyChallenges.map((challenge) => (
             <ChallengeItem key={challenge.id} {...challenge} />
@@ -327,6 +147,4 @@ const MainPage: React.FC = () => {
       <Nav />
     </MainPageContainer>
   );
-};
-
-export default MainPage;
+}
