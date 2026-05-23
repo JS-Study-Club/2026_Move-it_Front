@@ -1,3 +1,4 @@
+// 메인페이지에 들어가는 레벨 카드 컴포넌트
 import { useLocation } from 'react-router-dom';
 import {
   ProfileSection,
@@ -40,10 +41,6 @@ interface LocationState {
   teacherImage?: string;
 }
 
-interface MyLevelCardProps {
-  showPracticeBtn?: boolean;
-}
-
 const getLevelTitle = (level: number): string => {
   if (level >= 50) return '전설의 댄스 마스터';
   if (level >= 30) return '무대를 장악하는 댄스 스타';
@@ -65,10 +62,9 @@ const getSavedTeacherImage = (): string | undefined => {
   } catch { return undefined; }
 };
 
-export default function MyLevelCard({ showPracticeBtn = true }: MyLevelCardProps) {
+export default function MyLevelCard() {
   const location = useLocation();
 
-  // ⭕ 팀원이 추가한 캐릭터 복원 및 렌더링 로직 유지!
   const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
 
@@ -90,11 +86,12 @@ export default function MyLevelCard({ showPracticeBtn = true }: MyLevelCardProps
             <LevelText>
               LV.{currentLevel} {getLevelTitle(currentLevel)}
             </LevelText>
+            
             <ProgressTrack>
               <ProgressFill $progress={60} />
             </ProgressTrack>
           </LevelInfoArea>
-          {showPracticeBtn && <PracticeBtn>연습</PracticeBtn>}
+          <PracticeBtn>연습</PracticeBtn>
         </LevelCardInner>
       </LevelCardWrapper>
     </ProfileSection>

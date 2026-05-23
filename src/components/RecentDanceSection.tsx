@@ -1,3 +1,4 @@
+//최근 연습한 춤
 import { useRef, useEffect } from 'react';
 import DanceCard from './DanceCard';
 import {

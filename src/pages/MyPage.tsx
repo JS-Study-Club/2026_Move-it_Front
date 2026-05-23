@@ -1,7 +1,7 @@
 import Header from '../components/Header';
 import Nav from '../components/Nav';
 
-import MyLevelCard from '../components/MyLevelCard';
+import MyProfileCard from '../components/MyProfilecard'; // ← 마이페이지 전용 컴팩트 카드
 import RecentDanceSection from '../components/RecentDanceSection';
 
 import { MainPageContainer } from './MainPage.styles';
@@ -11,10 +11,8 @@ export default function MyPage() {
         <MainPageContainer>
             <Header />
 
-            {/* 연습 버튼은 숨김 */}
-            <MyLevelCard showPracticeBtn={false} />
+            <MyProfileCard />
 
-            {/* 2. 가로 스크롤과 댄스카드가 포함된 섹션을 타이틀만 바꿔서 재사용 */}
             <RecentDanceSection title="최근 연습한 춤" />
 
             <Nav />

@@ -4,8 +4,6 @@ import type { ChallengeData, YouTubeItem } from '../types';
 import Header from '../components/Header';
 import ChallengeItem from '../components/ChallengeItem';
 import Nav from '../components/Nav';
-
-// 1. 컴포넌트 임포트
 import MyLevelCard from '../components/MyLevelCard';
 import RecentDanceSection from '../components/RecentDanceSection';
 
@@ -128,8 +126,7 @@ export default function MainPage() {
     <MainPageContainer>
       <Header />
 
-      {/* 2. 팀원의 캐릭터 로직이 내장된 레벨 카드 컴포넌트 호출 */}
-      <MyLevelCard showPracticeBtn={true} />
+      <MyLevelCard/>
 
       {/* 3. 최근 영상 컴포넌트 호출 */}
       <RecentDanceSection title="높은 점수를 받은 댄스 영상" />
