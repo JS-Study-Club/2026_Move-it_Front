@@ -1,6 +1,7 @@
 // 마이페이지에 들어가는 프로필, 레벨 카드 컴포넌트
 import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
+import {DUMMY_USER} from '../data/user'; 
 
 // 이미지 임포트
 import defaultChar from '../img/tyt.png';
@@ -130,8 +131,6 @@ export default function MyProfileCard() {
   const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
   const charImg = teacherImage ?? defaultChar;
 
-  const currentLevel = 30;
-
   return (
     <ProfileCard>
       {/* 원형 프로필에 캐릭터 이미지 */}
@@ -141,10 +140,10 @@ export default function MyProfileCard() {
 
       {/* 이름 + 레벨 + 프로그레스바 */}
       <InfoArea>
-        <UserName>홍길동</UserName>
-        <LevelText>LV.{currentLevel} {getLevelTitle(currentLevel)}</LevelText>
+        <UserName>{DUMMY_USER.name}</UserName>
+        <LevelText>LV.{DUMMY_USER.level} {getLevelTitle(DUMMY_USER.level)}</LevelText>
         <ProgressTrack>
-          <ProgressFill $progress={60} />
+          <ProgressFill $progress={DUMMY_USER.progress} />
         </ProgressTrack>
       </InfoArea>
     </ProfileCard>

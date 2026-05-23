@@ -13,6 +13,8 @@ import {
   PracticeBtn
 } from '../pages/MainPage.styles';
 
+import {DUMMY_USER} from '../data/user'; // 나중에 API로 교체
+
 // 이미지 임포트
 import defaultChar from '../img/tyt.png';
 import tyt from '../img/tyt.png';
@@ -72,8 +74,6 @@ export default function MyLevelCard() {
   const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
   const charImg = teacherImage ?? defaultChar;
 
-  const currentLevel = 30;
-
   return (
     <ProfileSection>
       <CharacterContainer>
@@ -84,11 +84,11 @@ export default function MyLevelCard() {
         <LevelCardInner>
           <LevelInfoArea>
             <LevelText>
-              LV.{currentLevel} {getLevelTitle(currentLevel)}
+              LV.{DUMMY_USER.level} {getLevelTitle(DUMMY_USER.level)}
             </LevelText>
-            
+
             <ProgressTrack>
-              <ProgressFill $progress={60} />
+              <ProgressFill $progress={DUMMY_USER.progress} />
             </ProgressTrack>
           </LevelInfoArea>
           <PracticeBtn>연습</PracticeBtn>
