@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { GlobalStyle, AppContainer } from './App.styles';
 import { useEffect } from 'react';
-import Nav from './components/Nav.tsx';
+//import Nav from './components/Nav.tsx';
 
 import Lee from './routes/Lee.tsx';
 import Yun from './routes/Yun.tsx'; // 다른 팀원이 있다면

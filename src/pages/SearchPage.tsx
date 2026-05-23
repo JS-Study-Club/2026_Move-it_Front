@@ -21,7 +21,7 @@ const SUGGESTED_TAGS = [
 const RECENT_SEARCHES_KEY = 'moveit_recent_searches';
 const MAX_RECENT = 8;
 
-const SearchPage: React.FC = () => {
+export default function SearchPage() {
     const [query, setQuery] = useState('');
 
     // ── 최근 검색어: localStorage에서 불러오기 ──────────────────────────────
@@ -190,4 +190,3 @@ const SearchPage: React.FC = () => {
     );
 };
 
-export default SearchPage;
