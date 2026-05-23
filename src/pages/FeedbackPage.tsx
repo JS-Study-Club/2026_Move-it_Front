@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
-import char from '../img/image 78.png';
+import char from '../img/tyt.png';
 import checkIcon from '../img/checkIcon - feedback.svg';
 import rhythemIcon from '../img/rhythm.png';
 import accuracyIcon from '../img/accuracy.png';
@@ -83,8 +83,7 @@ const TAB_CONFIG = [
 
 type TabKey = (typeof TAB_CONFIG)[number]['key'];
 
-// ─── 컴포넌트 ──────────────────────────────────────────────────────────────
-const FeedbackPage: React.FC = () => {
+export default function FeedbackPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabKey>('rhythm');
 
@@ -165,5 +164,3 @@ const FeedbackPage: React.FC = () => {
         </FeedbackPageContainer>
     );
 };
-
-export default FeedbackPage;
