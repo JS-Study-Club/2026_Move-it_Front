@@ -26,6 +26,9 @@ export default function LoginPage() {
         {
           userId: id,
           password: password,
+        },
+        {
+          withCredentials: true,
         }
       );
       console.log("로그인 시도!", { id, password });
