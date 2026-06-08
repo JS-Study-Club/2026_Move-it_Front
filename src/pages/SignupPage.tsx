@@ -6,6 +6,7 @@ import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
+import { api } from "../api/axios";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -27,15 +28,12 @@ export default function SignupPage() {
       return;
     }
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/signup",
-        {
-          userId: form.id,
-          userName: form.name,
-          email: form.email,
-          password: form.password,
-        }
-      );
+      const response = await api.post("auth/signup", {
+        userId: form.id,
+        userName: form.name,
+        email: form.email,
+        password: form.password,
+      });
 
       if (response.status === 201 || response.status === 200) {
         alert("회원가입 완료!");

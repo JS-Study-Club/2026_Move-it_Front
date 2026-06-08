@@ -5,7 +5,8 @@ import Bgimg from "../img/background.png";
 import StartButton from "../components/StartButton";
 import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useAuthStore } from "../store/authStore";
+import { api } from "../api/axios";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function LoginPage() {
   // 1. 아이디와 비밀번호 상태 관리
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
+  const { setAccessToken, setUser } = useAuthStore();
 
   const handleLogin = async () => {
     // 2. 유효성 검사 (공백 제거 후 빈 값인지 확인)
@@ -21,27 +23,27 @@ export default function LoginPage() {
     //   return; // 입력되지 않았다면 여기서 함수 종료
     // }
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/login", // TODO : env로 숨기기
-        {
-          userId: id,
-          password: password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-      console.log("로그인 시도!", { id, password });
+      const response = await api.post("auth/login", {
+        userId: id,
+        password: password,
+      });
 
       if (response.status === 200) {
-        console.log("로그인 성공", response.data);
+        console.log("로그인 성공", response.data, " :: ");
+        console.log(response.data.data.accessToken);
         alert("로그인에 성공햇습니다");
+
+        setAccessToken(response.data.data.accessToken);
+        setUser(response.data.data.user);
+
         navigate("/yun/select");
       }
     } catch (error) {
       console.error("로그인 에러: ", error);
       if (error.response) {
-        alert(error.response.data.message || "로그인 정보가 올바르지 않습니다");
+        alert(
+          error.response.data.data.message || "로그인 정보가 올바르지 않습니다"
+        );
       } else {
         alert("서버와의 통신 실패");
       }

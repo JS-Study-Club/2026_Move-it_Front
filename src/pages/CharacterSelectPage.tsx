@@ -14,6 +14,7 @@ import jht from "../img/jht.png";
 import ygt from "../img/ygt.png";
 import jrt from "../img/jrt.png";
 import axios from "axios";
+import { api } from "../api/axios";
 
 const teacherImages: Record<number, string> = {
   1: tyt,
@@ -53,30 +54,22 @@ export default function CharacterSelectPage() {
     // localStorage에 선택한 캐릭터 저장
     try {
       localStorage.setItem("selectedTeacher", JSON.stringify(current));
-      localStorage.setItem("selectedTeacherImageId", String(current.id));
-      const response = await axios.patch(
-        "http://localhost:3000/api/users/me",
-        {
-          teacherId: current.id,
+
+      const response = await api.patch("users/me", {
+        teacherId: current.id,
+      });
+      console.log("선택 성공");
+      navigate("/lee/main", {
+        state: {
+          teacher: current,
+          teacherImage: teacherImages[current.id],
         },
-        {
-          withCredentials: true,
-        }
-      );
-      if (response.status === 200) {
-        console.log("선택 성공");
-        navigate("/lee/main", {
-          state: {
-            teacher: current,
-            teacherImage: teacherImages[current.id],
-          },
-        });
-      }
+      });
     } catch (error) {
-      console.error("선생님 선택 에러 : ", error);
-      alert("선생님께서 교무실에 안계십니다!");
-      if (error.response) {
-        alert(error.resposne.data.message || "빈 교무실");
+      if (axios.isAxiosError(error)) {
+        console.error(error.response);
+
+        alert(error.response?.data?.message ?? "빈 교무실");
       }
     }
   };
