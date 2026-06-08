@@ -1,26 +1,51 @@
-import styled from 'styled-components';
-import Logo from '../img/logo.png';
-import Bgimg from '../img/background.png';
-import StartButton from '../components/StartButton';
-import InputField from '../components/InputFeild';
-import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import styled from "styled-components";
+import Logo from "../img/logo.png";
+import Bgimg from "../img/background.png";
+import StartButton from "../components/StartButton";
+import InputField from "../components/InputFeild";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import axios from "axios";
 
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', id: '', password: '' });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    id: "",
+    password: "",
+  });
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!form.name || !form.email || !form.id || !form.password) {
-      alert('모든 항목을 입력해주세요.');
+      alert("모든 항목을 입력해주세요.");
       return;
     }
-    console.log("회원가입 시도!");
-    navigate('/yun/login'); 
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/signup",
+        {
+          userId: form.id,
+          userName: form.name,
+          email: form.email,
+          password: form.password,
+        }
+      );
+
+      if (response.status === 201 || response.status === 200) {
+        alert("회원가입 완료!");
+        navigate("/yun/login");
+      }
+    } catch (error) {
+      console.error("회원가입 에러: ", error);
+      if (error.response) alert(error.response.data.message || "회원가입 실패");
+      else alert("서버 연결 실패");
+    }
   };
 
   return (
@@ -30,18 +55,36 @@ export default function SignupPage() {
       </TopSection>
 
       <FormSection>
-        <InputField label="이름" placeholder="본인 이름을 입력해주세요." onChange={handleChange('name')} />
-        <InputField label="이메일" placeholder="이메일을 입력해주세요." type="email" onChange={handleChange('email')} />
-        <InputField label="아이디" placeholder="아이디를 입력해주세요." onChange={handleChange('id')} />
-        <InputField label="비밀번호" placeholder="비밀번호를 입력해주세요." type="password" onChange={handleChange('password')} />
+        <InputField
+          label="이름"
+          placeholder="본인 이름을 입력해주세요."
+          onChange={handleChange("name")}
+        />
+        <InputField
+          label="이메일"
+          placeholder="이메일을 입력해주세요."
+          type="email"
+          onChange={handleChange("email")}
+        />
+        <InputField
+          label="아이디"
+          placeholder="아이디를 입력해주세요."
+          onChange={handleChange("id")}
+        />
+        <InputField
+          label="비밀번호"
+          placeholder="비밀번호를 입력해주세요."
+          type="password"
+          onChange={handleChange("password")}
+        />
       </FormSection>
 
       <BottomSection>
         <StartButton text="회원가입" onClick={handleSignup} />
         <LinkRow>
-          <LinkText onClick={() => navigate('/')}>첫 화면으로</LinkText>
+          <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
           <Divider>|</Divider>
-          <LinkText onClick={() => navigate('/yun/login')}>로그인</LinkText>
+          <LinkText onClick={() => navigate("/yun/login")}>로그인</LinkText>
         </LinkRow>
       </BottomSection>
     </PageContainer>
@@ -61,7 +104,6 @@ const PageContainer = styled.div`
   box-sizing: border-box;
   position: relative; /* BottomSection absolute 기준점 */
 `;
-
 
 const TopSection = styled.div`
   display: flex;
@@ -102,7 +144,7 @@ const LinkRow = styled.div`
 `;
 
 const LinkText = styled.span`
-  color: #031F32;
+  color: #031f32;
   text-align: center;
   font-family: Galmuri11;
   font-size: 12px;
@@ -113,7 +155,7 @@ const LinkText = styled.span`
 `;
 
 const Divider = styled.span`
-  color: #031F32;
+  color: #031f32;
   font-family: Galmuri11;
   font-size: 12px;
   line-height: 22px;

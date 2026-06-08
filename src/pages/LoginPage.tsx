@@ -1,27 +1,48 @@
-import { useState } from 'react'; // useState 추가
-import styled from 'styled-components';
-import Logo from '../img/logo.png';
-import Bgimg from '../img/background.png';
-import StartButton from '../components/StartButton';
-import InputField from '../components/InputFeild';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import styled from "styled-components";
+import Logo from "../img/logo.png";
+import Bgimg from "../img/background.png";
+import StartButton from "../components/StartButton";
+import InputField from "../components/InputFeild";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
   // 1. 아이디와 비밀번호 상태 관리
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
+  const [id, setId] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // 2. 유효성 검사 (공백 제거 후 빈 값인지 확인)
-    if (!id.trim() || !password.trim()) {
-      alert("아이디와 비밀번호를 모두 입력해주세요!");
-      return; // 입력되지 않았다면 여기서 함수 종료
-    }
+    // if (!id.trim() || !password.trim()) {
+    //   alert("아이디와 비밀번호를 모두 입력해주세요!");
+    //   return; // 입력되지 않았다면 여기서 함수 종료
+    // }
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/login", // TODO : env로 숨기기
+        {
+          userId: id,
+          password: password,
+        }
+      );
+      console.log("로그인 시도!", { id, password });
 
-    console.log("로그인 시도!", { id, password });
-    navigate('/yun/select'); 
+      if (response.status === 200) {
+        console.log("로그인 성공", response.data);
+        alert("로그인에 성공햇습니다");
+        navigate("/yun/select");
+      }
+    } catch (error) {
+      console.error("로그인 에러: ", error);
+      if (error.response) {
+        alert(error.response.data.message || "로그인 정보가 올바르지 않습니다");
+      } else {
+        alert("서버와의 통신 실패");
+      }
+    }
   };
 
   return (
@@ -30,35 +51,36 @@ export default function LoginPage() {
         <LogoImage src={Logo} alt="Logo" />
       </TopSection>
 
-      <FormSection>
+      <FormSection onSubmit={handleLogin}>
         {/* 3. value와 onChange 연결 */}
-        <InputField 
-          label="아이디" 
-          placeholder="아이디를 입력해주세요." 
+        <InputField
+          label="아이디"
+          placeholder="아이디를 입력해주세요."
+          type="text"
           value={id}
           onChange={(e) => setId(e.target.value)}
         />
-        <InputField 
-          label="비밀번호" 
-          placeholder="비밀번호를 입력해주세요." 
-          type="password" 
+        <InputField
+          label="비밀번호"
+          placeholder="비밀번호를 입력해주세요."
+          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
         <PlaceholderField>
-          <InputField label="" placeholder="" aria-hidden="true"/>
+          <InputField label="" placeholder="" aria-hidden="true" />
         </PlaceholderField>
         <PlaceholderField>
-          <InputField label="" placeholder="" aria-hidden="true"/>
+          <InputField label="" placeholder="" aria-hidden="true" />
         </PlaceholderField>
       </FormSection>
 
       <BottomSection>
-        <StartButton text="로그인" onClick={handleLogin} />
+        <StartButton text="로그인" type="submit" onClick={handleLogin} />
         <LinkRow>
-          <LinkText onClick={() => navigate('/')}>첫 화면으로</LinkText>
+          <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
           <Divider>|</Divider>
-          <LinkText onClick={() => navigate('/yun/signup')}>회원가입</LinkText>
+          <LinkText onClick={() => navigate("/yun/signup")}>회원가입</LinkText>
         </LinkRow>
       </BottomSection>
     </PageContainer>
@@ -92,7 +114,7 @@ const LogoImage = styled.img`
   aspect-ratio: 112/165;
 `;
 
-const FormSection = styled.div`
+const FormSection = styled.form`
   width: 100%;
   max-width: 400px;
   padding: 0 20px;
@@ -100,7 +122,7 @@ const FormSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 340px; 
+  height: 340px;
 `;
 
 const PlaceholderField = styled.div`
@@ -125,7 +147,7 @@ const LinkRow = styled.div`
 `;
 
 const LinkText = styled.span`
-  color: #031F32;
+  color: #031f32;
   text-align: center;
   font-family: Galmuri11;
   font-size: 12px;
@@ -136,7 +158,7 @@ const LinkText = styled.span`
 `;
 
 const Divider = styled.span`
-  color: #031F32;
+  color: #031f32;
   font-family: Galmuri11;
   font-size: 12px;
   line-height: 22px;
