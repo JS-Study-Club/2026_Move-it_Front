@@ -1,332 +1,105 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import type { VideoData, ChallengeData, YouTubeItem } from '../types';
+import { useEffect, useState } from "react";
+import type {
+  ApiResponse,
+  HighScoreChallengeVideo,
+  HomeUserInfo,
+  PageHomeResponse,
+  RecommendedChallenge,
+  YouTubeItem,
+} from "../types";
 
-import Header from '../components/Header';
-import DanceCard from '../components/DanceCard';
-import ChallengeItem from '../components/ChallengeItem';
-import Nav from '../components/Nav';
+import Header from "../components/Header";
+import ChallengeItem from "../components/ChallengeItem";
+import Nav from "../components/Nav";
+import MyLevelCard from "../components/MyLevelCard";
+import RecentDanceSection from "../components/RecentDanceSection";
 
-import thumb1 from '../img/thumb1.png';
-import thumb2 from '../img/thumb2.png';
-import defaultChar from '../img/tyt.png';
-
-import tyt from '../img/tyt.png';
-import yjt from '../img/yjt.png';
-import jht from '../img/jht.png';
-import ygt from '../img/ygt.png';
-import jrt from '../img/jrt.png';
+//TODO : 토큰 타임아웃 확인
+//TODO : 다머지 path 막아버리기
 
 import {
   MainPageContainer,
-  ProfileSection,
-  CharacterContainer,
-  CharacterImg,
-  LevelCardWrapper,
-  LevelCardInner,
-  LevelInfoArea,
-  LevelText,
-  ProgressTrack,
-  ProgressFill,
-  PracticeBtn,
   ContentSection,
   SectionTitle,
-  HorizontalScroll,
-  ScrollIndicatorTrack,
-  ScrollIndicatorBar,
   ChallengeList,
-} from './MainPage.styles';
+} from "./MainPage.styles";
+import { api } from "../api/axios";
+import { useAuthStore } from "../store/authStore";
+import { useNavigate } from "react-router-dom";
+import { toVideoData } from "../utils/videoMapper";
+import type { VideoData, ChallengeData } from "../types.ui";
+import { toChallengeData } from "../utils/challengeMapper";
 
-const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
-
-const teacherImages: Record<number, string> = {
-  1: tyt,
-  2: yjt,
-  3: jht,
-  4: ygt,
-  5: jrt,
-};
-
-interface Teacher {
-  id: number;
-  name: string;
-  hashtag: string;
-  comment: string;
-}
-
-interface LocationState {
-  teacher?: Teacher;
-  teacherImage?: string;
-}
-
-const decodeHTMLEntities = (text: string) => {
-  const textArea = document.createElement('textarea');
-  textArea.innerHTML = text;
-  return textArea.value;
-};
-
-const getLevelTitle = (level: number): string => {
-  if (level >= 50) return '전설의 댄스 마스터';
-  if (level >= 30) return '무대를 장악하는 댄스 스타';
-  if (level >= 10) return '리듬을 깨우친 댄스 유망주';
-  return '쑥쑥 자라는 댄스신동';
-};
-
-const formatViewCount = (count: string): string => {
-  const num = parseInt(count, 10);
-  if (num >= 100000000) return `${(num / 100000000).toFixed(1)}억`;
-  if (num >= 10000) return `${Math.floor(num / 10000)}만`;
-  if (num >= 1000) return `${Math.floor(num / 1000)}천`;
-  return `${num}회`;
-};
-
-const parseDuration = (iso: string): string => {
-  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  const hours = parseInt(match?.[1] ?? '0');
-  const minutes = parseInt(match?.[2] ?? '0');
-  const seconds = parseInt(match?.[3] ?? '0');
-  return `${hours * 3600 + minutes * 60 + seconds}초`;
-};
-
-const formatDate = (iso: string): string => {
-  return iso.slice(0, 10).replace(/-/g, '.');
-};
-
-// localStorage에서 저장된 캐릭터 불러오기
-const getSavedTeacher = (): Teacher | undefined => {
-  try {
-    const saved = localStorage.getItem('selectedTeacher');
-    return saved ? JSON.parse(saved) : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const getSavedTeacherImage = (): string | undefined => {
-  try {
-    const savedId = localStorage.getItem('selectedTeacherImageId');
-    return savedId ? teacherImages[Number(savedId)] : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const MainPage: React.FC = () => {
-  const location = useLocation();
-
-  const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
-    (location.state as LocationState) ?? {};
-
-  // location.state가 있으면 우선 사용, 없으면 localStorage에서 복원
-  const teacher = stateTeacher ?? getSavedTeacher();
-  const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
-
-  const charImg = teacherImage ?? defaultChar;
-
-  const currentLevel = 30;
-
-  const [dailyChallenges, setDailyChallenges] = useState<ChallengeData[]>([]);
-
-  const topVideos: VideoData[] = [
-    {
-      id: '1',
-      title: 'BANG BANG (Preview) - IVE',
-      date: '2025.11.20',
-      score: 98,
-      thumbnail: thumb1,
-    },
-    {
-      id: '2',
-      title: '아웅다웅 (feat. TimeFever)',
-      date: '2026.01.07',
-      score: 90,
-      thumbnail: thumb2,
-    },
-    {
-      id: '3',
-      title: 'Supernova - aespa',
-      date: '2025.11.10',
-      score: 80,
-      thumbnail: thumb2,
-    },
-  ];
-
-  const sortedVideos = [...topVideos].sort((a, b) => b.score - a.score);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+export default function MainPage() {
+  // const [dailyChallenges, setDailyChallenges] = useState<ChallengeData[]>([]);
+  const navigate = useNavigate();
+  // const user = useAuthStore((state) => state.user);
+  const { setUser } = useAuthStore();
+  const [userData, setUserData] = useState<HomeUserInfo | null>(null);
+  const [highScoreChallengeVideo, setHighScoreChallengeVideo] = useState<
+    VideoData[] | null
+  >(null);
+  const [recommandChallenge, setRecommandChallenge] = useState<
+    ChallengeData[] | null
+  >(null);
 
   useEffect(() => {
-    const scrollEl = scrollRef.current;
-    const barEl = barRef.current;
-
-    if (!scrollEl || !barEl) return;
-
-    const onScroll = () => {
-      if (rafRef.current !== null) return;
-
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-
-        if (!scrollEl || !barEl) return;
-
-        const { scrollLeft, scrollWidth, clientWidth } = scrollEl;
-        const scrollable = scrollWidth - clientWidth;
-
-        if (scrollable <= 0) return;
-
-        const percent = scrollLeft / scrollable;
-        const maxMove = 262 - 100;
-
-        barEl.style.transform = `translateX(${percent * maxMove}px)`;
-      });
-    };
-
-    scrollEl.addEventListener('scroll', onScroll, { passive: true });
-
-    return () => {
-      scrollEl.removeEventListener('scroll', onScroll);
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const fetchRecommendations = async () => {
+    const fetchUserData = async () => {
       try {
-        const searchUrl = new URL('https://www.googleapis.com/youtube/v3/search');
-        searchUrl.searchParams.set('part', 'snippet');
-        searchUrl.searchParams.set('q', 'kpop dance challenge');
-        searchUrl.searchParams.set('type', 'video');
-        searchUrl.searchParams.set('videoCategoryId', '10');
-        searchUrl.searchParams.set('order', 'viewCount');
-        searchUrl.searchParams.set('maxResults', '3');
-        searchUrl.searchParams.set('regionCode', 'KR');
-        searchUrl.searchParams.set('relevanceLanguage', 'ko');
-        searchUrl.searchParams.set('key', YOUTUBE_API_KEY);
-
-        const res = await fetch(searchUrl.toString());
-        if (!res.ok) throw new Error('Failed to fetch YouTube data');
-
-        const data = await res.json();
-
-        const ids = data.items
-          .map((item: YouTubeItem) =>
-            typeof item.id === 'string' ? item.id : item.id?.videoId ?? ''
-          )
-          .join(',');
-
-        const statsUrl = new URL('https://www.googleapis.com/youtube/v3/videos');
-        statsUrl.searchParams.set('part', 'statistics,contentDetails,snippet');
-        statsUrl.searchParams.set('id', ids);
-        statsUrl.searchParams.set('key', YOUTUBE_API_KEY);
-
-        const statsRes = await fetch(statsUrl.toString());
-        if (!statsRes.ok) throw new Error('Failed to fetch video statistics');
-
-        const statsData = await statsRes.json();
-
-        const viewCountMap: Record<string, { viewCount: string; duration: string; publishedAt: string }> = {};
-
-        statsData.items.forEach(
-          (item: {
-            id: string;
-            statistics: { viewCount: string };
-            contentDetails: { duration: string };
-            snippet: { publishedAt: string };
-          }) => {
-            viewCountMap[item.id] = {
-              viewCount: item.statistics.viewCount ?? '0',
-              duration: item.contentDetails.duration,
-              publishedAt: item.snippet.publishedAt,
-            };
-          }
+        const response = await api.get<ApiResponse<PageHomeResponse>>(
+          "/pages/home"
         );
-
-        const formattedChallenges: ChallengeData[] = data.items.map((item: YouTubeItem) => {
-          const resolvedId =
-            typeof item.id === 'string' ? item.id : item.id?.videoId ?? '';
-
-          const { viewCount, duration, publishedAt } = viewCountMap[resolvedId] ?? {
-            viewCount: '0',
-            duration: 'PT0S',
-            publishedAt: '',
-          };
-
-          return {
-            id: resolvedId,
-            artist: decodeHTMLEntities(item.snippet?.channelTitle ?? 'Unknown Artist'),
-            song: decodeHTMLEntities(item.snippet?.title ?? 'Unknown Song'),
-            thumbnail: item.snippet?.thumbnails?.medium?.url ?? '',
-            description: '오늘의 인기 댄스 챌린지!',
-            participants: formatViewCount(viewCount),
-            uploadDate: formatDate(publishedAt),
-            duration: parseDuration(duration),
-          };
-        });
-
-        setDailyChallenges(formattedChallenges);
-      } catch (error) {
-        console.error(error);
+        if (response.status === 200) {
+          setUserData(response.data.data.user);
+          setUser(response.data.data.user);
+          const videos = response.data.data.highScoreDance?.map(toVideoData);
+          setHighScoreChallengeVideo(videos);
+          const recommandChallenges =
+            response.data.data.recommendedChallengeList?.map(toChallengeData);
+          setRecommandChallenge(recommandChallenges);
+          console.log("mainpage1 : ", videos);
+          console.log("mainpage2 : ", recommandChallenges);
+          console.log("mainpage3 : ", recommandChallenges);
+        }
+      } catch (error: any) {
+        console.log("유저정보 불러오기 실패", error);
+        if (error.response?.status === 401) {
+          useAuthStore.getState().logout();
+          navigate("/yun/login");
+        }
       }
     };
-
-    fetchRecommendations();
+    fetchUserData();
   }, []);
+
+  console.log("mainpage : ", userData);
 
   return (
     <MainPageContainer>
       <Header />
 
-      <ProfileSection>
-        <CharacterContainer>
-          <CharacterImg src={charImg} alt={teacher?.name ?? 'character'} />
-        </CharacterContainer>
+      {userData && <MyLevelCard user={userData} />}
 
-        <LevelCardWrapper>
-          <LevelCardInner>
-            <LevelInfoArea>
-              <LevelText>
-                LV.{currentLevel} {getLevelTitle(currentLevel)}
-              </LevelText>
-
-              <ProgressTrack>
-                <ProgressFill $progress={60} />
-              </ProgressTrack>
-            </LevelInfoArea>
-
-            <PracticeBtn>연습</PracticeBtn>
-          </LevelCardInner>
-        </LevelCardWrapper>
-      </ProfileSection>
-
-      <ContentSection>
-        <SectionTitle>높은 점수를 받은 댄스 영상</SectionTitle>
-
-        <HorizontalScroll ref={scrollRef}>
-          {sortedVideos.map((video) => (
-            <DanceCard key={video.id} {...video} />
-          ))}
-        </HorizontalScroll>
-
-        <ScrollIndicatorTrack>
-          <ScrollIndicatorBar ref={barRef} $scrollPercent={0} />
-        </ScrollIndicatorTrack>
-      </ContentSection>
-
+      {/* 3. 최근 영상 컴포넌트 호출 */}
+      {highScoreChallengeVideo && (
+        <RecentDanceSection
+          title="높은 점수를 받은 댄스 영상"
+          videos={highScoreChallengeVideo}
+        />
+      )}
+      {/* 4. 추천 챌린지 렌더링 */}
       <ContentSection>
         <SectionTitle>오늘의 추천 댄스 챌린지</SectionTitle>
-
         <ChallengeList>
-          {dailyChallenges.map((challenge) => (
+          {/* {dailyChallenges.map((challenge) => (
             <ChallengeItem key={challenge.id} {...challenge} />
-          ))}
+          ))} */}
+          {recommandChallenge &&
+            recommandChallenge?.map((v) => <ChallengeItem key={v.id} {...v} />)}
         </ChallengeList>
       </ContentSection>
 
       <Nav />
     </MainPageContainer>
   );
-};
-
-export default MainPage;
+}

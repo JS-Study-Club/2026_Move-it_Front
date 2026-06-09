@@ -1,14 +1,19 @@
-import styled from 'styled-components';
+import styled from "styled-components";
 
 // Props 타입 정의
 interface StartButtonProps {
   text: string; // 버튼에 표시할 문구
   onClick?: () => void; // 클릭 시 실행할 함수 (옵션)
+  type?: "button" | "submit" | "reset";
 }
 
-export default function StartButton({ text, onClick }: StartButtonProps) {
+export default function StartButton({
+  text,
+  onClick,
+  type = "submit",
+}: StartButtonProps) {
   return (
-    <StyledButton onClick={onClick}>
+    <StyledButton onClick={onClick} type={type}>
       {text}
     </StyledButton>
   );
@@ -22,10 +27,10 @@ const StyledButton = styled.button`
   justify-content: center;
   align-items: center;
   border-radius: 12px;
-  background-color: #106AA9;
+  background-color: #106aa9;
 
-  color: #FFF;
-  font-family: 'Galmuri11', sans-serif;
+  color: #fff;
+  font-family: "Galmuri11", sans-serif;
   font-size: 16px;
   font-style: normal;
   font-weight: 400;
@@ -42,6 +47,6 @@ const StyledButton = styled.button`
 
   &:active {
     background-color: #0a4670;
-    transform: scale(0.98); 
+    transform: scale(0.98);
   }
 `;
