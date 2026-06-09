@@ -6,8 +6,6 @@ import { useEffect } from "react";
 import Lee from "./routes/Lee.tsx";
 import Yun from "./routes/Yun.tsx"; // 다른 팀원이 있다면
 import FirstPage from "./pages/FirstPage.tsx";
-import { api } from "./api/axios.ts";
-import { useAuthStore } from "./store/authStore.ts";
 
 export default function App() {
   function setScreenSize() {
@@ -19,20 +17,6 @@ export default function App() {
 
     window.addEventListener("resize", setScreenSize);
     return () => window.removeEventListener("resize", setScreenSize);
-  }, []);
-
-  useEffect(() => {
-    const fetchMe = async () => {
-      try {
-        const response = await api.get("/users/me");
-
-        useAuthStore.getState().setUser(response.data);
-      } catch (error) {
-        console.log("비로그인 상태");
-      }
-    };
-
-    fetchMe();
   }, []);
 
   return (

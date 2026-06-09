@@ -1,9 +1,24 @@
-import React from 'react';
-import type { ChallengeData } from '../types';
-import {ChallengeItemContainer, CardHeader, CardThumb, CardTexts, CardTitle, CardSub, StartBtn, CardTags} from './ChallengeItem.styles';
+import React from "react";
+import type { ChallengeData } from "../types.ui";
+import {
+  ChallengeItemContainer,
+  CardHeader,
+  CardThumb,
+  CardTexts,
+  CardTitle,
+  CardSub,
+  StartBtn,
+  CardTags,
+} from "./ChallengeItem.styles";
 
-const ChallengeItem: React.FC<ChallengeData> = ({ 
-  artist, song, description, thumbnail, participants, duration, uploadDate
+const ChallengeItem: React.FC<ChallengeData> = ({
+  artist,
+  song,
+  description,
+  thumbnail,
+  participants,
+  duration,
+  uploadDate,
 }) => {
   return (
     <ChallengeItemContainer>
@@ -12,7 +27,9 @@ const ChallengeItem: React.FC<ChallengeData> = ({
           <img src={thumbnail} alt="Thumbnail" />
         </CardThumb>
         <CardTexts>
-          <CardTitle>{artist} - {song}</CardTitle>
+          <CardTitle>
+            {artist} - {song}
+          </CardTitle>
           <CardSub>{description}</CardSub>
         </CardTexts>
       </CardHeader>

@@ -8,13 +8,9 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken; //TODO : 로컬에 들어간 거 지우기
-  console.log(
-    `intersp token : ${token}` // debug
-  );
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 });
 
@@ -32,35 +28,35 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      originalRequest.url !== "/auth/login"
+      !originalRequest.url?.includes("/auth/login") &&
+      !originalRequest.url?.includes("/auth/refresh")
     ) {
       originalRequest._retry = true;
+
+      try {
+        // refresh 요청
+        const refreshResponse = await axios.post(
+          "http://localhost:3000/api/auth/refresh",
+          {},
+          {
+            withCredentials: true,
+          }
+        );
+
+        const newAccessToken = refreshResponse.data.accessToken;
+
+        useAuthStore.getState().setAccessToken(newAccessToken);
+
+        originalRequest.headers = originalRequest.headers ?? {};
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return axios(originalRequest);
+      } catch (refreshError) {
+        useAuthStore.getState().logout();
+        window.location.href = "/yun/login";
+        return Promise.reject(refreshError);
+      }
     }
-
-    try {
-      // refresh 요청
-      const refreshResponse = await axios.post(
-        "http://localhost:3000/api/auth/refresh",
-        {},
-        {
-          withCredentials: true,
-        }
-      );
-
-      const newAccessToken = refreshResponse.data.accessToken;
-
-      // store + localStorage 저장
-      useAuthStore.getState().setAccessToken(newAccessToken);
-
-      // 기존 요청에 새 토큰 장착
-      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-
-      // 실패했던 요청 다시 실행
-      return api(originalRequest);
-    } catch (refreshError) {
-      useAuthStore.getState().logout();
-
-      return Promise.reject(refreshError);
-    }
+    return Promise.reject(error);
   }
 );

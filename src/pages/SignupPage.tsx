@@ -5,8 +5,8 @@ import StartButton from "../components/StartButton";
 import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import axios from "axios";
 import { api } from "../api/axios";
+import axios from "axios";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -22,18 +22,23 @@ export default function SignupPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSignup = async () => {
+  const handleSignup = async (e?: React.InputEvent) => {
+    e?.preventDefault();
     if (!form.name || !form.email || !form.id || !form.password) {
       alert("모든 항목을 입력해주세요.");
       return;
     }
     try {
-      const response = await api.post("auth/signup", {
-        userId: form.id,
-        userName: form.name,
-        email: form.email,
-        password: form.password,
-      });
+      const response = await axios.post(
+        "http://localhost:3000/api/auth/signup",
+        {
+          userId: form.id,
+          username: form.name,
+          email: form.email,
+          password: form.password,
+          teacherId: 1,
+        }
+      );
 
       if (response.status === 201 || response.status === 200) {
         alert("회원가입 완료!");
@@ -52,7 +57,7 @@ export default function SignupPage() {
         <LogoImage src={Logo} alt="Logo" />
       </TopSection>
 
-      <FormSection>
+      <FormSection onSubmit={handleSignup}>
         <InputField
           label="이름"
           placeholder="본인 이름을 입력해주세요."
@@ -75,16 +80,15 @@ export default function SignupPage() {
           type="password"
           onChange={handleChange("password")}
         />
+        <BottomSection>
+          <LinkRow>
+            <StartButton text="회원가입" onClick={handleSignup} type="submit" />
+            <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
+            <Divider>|</Divider>
+            <LinkText onClick={() => navigate("/yun/login")}>로그인</LinkText>
+          </LinkRow>
+        </BottomSection>
       </FormSection>
-
-      <BottomSection>
-        <StartButton text="회원가입" onClick={handleSignup} />
-        <LinkRow>
-          <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
-          <Divider>|</Divider>
-          <LinkText onClick={() => navigate("/yun/login")}>로그인</LinkText>
-        </LinkRow>
-      </BottomSection>
     </PageContainer>
   );
 }
@@ -115,7 +119,7 @@ const LogoImage = styled.img`
   aspect-ratio: 112/165;
 `;
 
-const FormSection = styled.div`
+const FormSection = styled.form`
   width: 100%;
   max-width: 400px;
   padding: 0 20px;

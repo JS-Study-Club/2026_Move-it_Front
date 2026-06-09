@@ -16,12 +16,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const { setAccessToken, setUser } = useAuthStore();
 
-  const handleLogin = async () => {
-    // 2. 유효성 검사 (공백 제거 후 빈 값인지 확인)
-    // if (!id.trim() || !password.trim()) {
-    //   alert("아이디와 비밀번호를 모두 입력해주세요!");
-    //   return; // 입력되지 않았다면 여기서 함수 종료
-    // }
+  const handleLogin = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     try {
       const response = await api.post("auth/login", {
         userId: id,

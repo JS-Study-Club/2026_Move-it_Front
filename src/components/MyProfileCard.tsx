@@ -1,15 +1,16 @@
 // 마이페이지에 들어가는 프로필, 레벨 카드 컴포넌트
-import { useLocation } from 'react-router-dom';
-import styled from 'styled-components';
-import {DUMMY_USER} from '../data/user'; 
+import { useLocation } from "react-router-dom";
+import styled from "styled-components";
+import { DUMMY_USER } from "../data/user";
 
 // 이미지 임포트
-import defaultChar from '../img/tyt.png';
-import tyt from '../img/tyt.png';
-import yjt from '../img/yjt.png';
-import jht from '../img/jht.png';
-import ygt from '../img/ygt.png';
-import jrt from '../img/jrt.png';
+import defaultChar from "../img/tyt.png";
+import tyt from "../img/tyt.png";
+import yjt from "../img/yjt.png";
+import jht from "../img/jht.png";
+import ygt from "../img/ygt.png";
+import jrt from "../img/jrt.png";
+import { useAuthStore } from "../store/authStore";
 
 const teacherImages: Record<number, string> = {
   1: tyt,
@@ -32,24 +33,28 @@ interface LocationState {
 }
 
 const getLevelTitle = (level: number): string => {
-  if (level >= 50) return '전설의 댄스 마스터';
-  if (level >= 30) return '무대를 장악하는 댄스 스타';
-  if (level >= 10) return '리듬을 깨우친 댄스 유망주';
-  return '쑥쑥 자라는 댄스신동';
+  if (level >= 50) return "전설의 댄스 마스터";
+  if (level >= 30) return "무대를 장악하는 댄스 스타";
+  if (level >= 10) return "리듬을 깨우친 댄스 유망주";
+  return "쑥쑥 자라는 댄스신동";
 };
 
 const getSavedTeacher = (): Teacher | undefined => {
   try {
-    const saved = localStorage.getItem('selectedTeacher');
+    const saved = localStorage.getItem("selectedTeacher");
     return saved ? JSON.parse(saved) : undefined;
-  } catch { return undefined; }
+  } catch {
+    return undefined;
+  }
 };
 
 const getSavedTeacherImage = (): string | undefined => {
   try {
-    const savedId = localStorage.getItem('selectedTeacherImageId');
+    const savedId = localStorage.getItem("selectedTeacherImageId");
     return savedId ? teacherImages[Number(savedId)] : undefined;
-  } catch { return undefined; }
+  } catch {
+    return undefined;
+  }
 };
 
 /* ── 마이페이지 전용 스타일 ── */
@@ -69,7 +74,7 @@ const AvatarCircle = styled.div`
   height: 64px;
   border-radius: 50%;
   overflow: hidden;
-  background-color: #DAF0FF;
+  background-color: #daf0ff;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -108,21 +113,22 @@ const LevelText = styled.div`
 
 const ProgressTrack = styled.div`
   height: 7px;
-  background-color: #FFE39C;
+  background-color: #ffe39c;
   border-radius: 4px;
   margin-top: 2px;
 `;
 
 const ProgressFill = styled.div<{ $progress: number }>`
-  width: ${props => props.$progress}%;
+  width: ${(props) => props.$progress}%;
   height: 100%;
-  background-color: #F6C039;
+  background-color: #f6c039;
   border-radius: 4px;
 `;
 
 /* ── 컴포넌트 ── */
 export default function MyProfileCard() {
   const location = useLocation();
+  const user = useAuthStore((state) => state.user);
 
   const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
@@ -135,13 +141,15 @@ export default function MyProfileCard() {
     <ProfileCard>
       {/* 원형 프로필에 캐릭터 이미지 */}
       <AvatarCircle>
-        <AvatarImg src={charImg} alt={teacher?.name ?? 'character'} />
+        <AvatarImg src={charImg} alt={teacher?.name ?? "character"} />
       </AvatarCircle>
 
       {/* 이름 + 레벨 + 프로그레스바 */}
       <InfoArea>
         <UserName>{DUMMY_USER.name}</UserName>
-        <LevelText>LV.{DUMMY_USER.level} {getLevelTitle(DUMMY_USER.level)}</LevelText>
+        <LevelText>
+          LV.{DUMMY_USER.level} {getLevelTitle(DUMMY_USER.level)}
+        </LevelText>
         <ProgressTrack>
           <ProgressFill $progress={DUMMY_USER.progress} />
         </ProgressTrack>

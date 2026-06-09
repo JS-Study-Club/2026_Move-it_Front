@@ -1,9 +1,11 @@
 import { create } from "zustand";
 
 interface User {
-  id: number;
-  userId: string;
   username: string;
+  level: number;
+  levelXp: number;
+  levelTitle: string;
+  teacherId: number;
 }
 
 interface AuthState {
