@@ -1,18 +1,19 @@
 import { create } from "zustand";
+import type { HomeUserInfo } from "../types";
 
-interface User {
-  username: string;
-  level: number;
-  levelXp: number;
-  levelTitle: string;
-  teacherId: number;
-}
+// interface UserHomeInfo {
+//   username: string;
+//   level: number;
+//   levelXp: number;
+//   levelTitle: string;
+//   teacherId: number;
+// }
 
 interface AuthState {
-  user: User | null;
+  user: HomeUserInfo | null;
   accessToken: string | null;
 
-  setUser: (user: User | null) => void;
+  setUser: (user: HomeUserInfo | null) => void;
   setAccessToken: (token: string | null) => void;
   logout: () => void;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import type { VideoData } from "../types";
+import type { VideoData } from "../types.ui";
 import {
   DanceCardContainer,
   CardBackgroundImage,
