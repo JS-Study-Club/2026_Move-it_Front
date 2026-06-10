@@ -35,6 +35,7 @@ export default function MainPage() {
   const navigate = useNavigate();
   // const user = useAuthStore((state) => state.user);
   const { setUser } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [userData, setUserData] = useState<HomeUserInfo | null>(null);
   const [highScoreChallengeVideo, setHighScoreChallengeVideo] = useState<
     VideoData[] | null
@@ -50,8 +51,8 @@ export default function MainPage() {
           "/pages/home"
         );
         if (response.status === 200) {
+          if (!user) setUser(response.data.data.user);
           setUserData(response.data.data.user);
-          setUser(response.data.data.user);
           const videos = response.data.data.highScoreDance?.map(toVideoData);
           setHighScoreChallengeVideo(videos);
           const recommandChallenges =

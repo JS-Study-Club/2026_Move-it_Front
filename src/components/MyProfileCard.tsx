@@ -11,6 +11,7 @@ import jht from "../img/jht.png";
 import ygt from "../img/ygt.png";
 import jrt from "../img/jrt.png";
 import { useAuthStore } from "../store/authStore";
+import type { HomeUserInfo } from "../types";
 
 const teacherImages: Record<number, string> = {
   1: tyt,
@@ -125,10 +126,13 @@ const ProgressFill = styled.div<{ $progress: number }>`
   border-radius: 4px;
 `;
 
+interface Props {
+  userInfo: any;
+}
+
 /* ── 컴포넌트 ── */
-export default function MyProfileCard() {
+export default function MyProfileCard({ userInfo }: Props) {
   const location = useLocation();
-  const user = useAuthStore((state) => state.user);
 
   const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
@@ -146,12 +150,10 @@ export default function MyProfileCard() {
 
       {/* 이름 + 레벨 + 프로그레스바 */}
       <InfoArea>
-        <UserName>{DUMMY_USER.name}</UserName>
-        <LevelText>
-          LV.{DUMMY_USER.level} {getLevelTitle(DUMMY_USER.level)}
-        </LevelText>
+        <UserName>{userInfo?.username}</UserName>
+        <LevelText>{`LV.${userInfo?.level} ${userInfo?.levelInfo.levelTitle}`}</LevelText>
         <ProgressTrack>
-          <ProgressFill $progress={DUMMY_USER.progress} />
+          <ProgressFill $progress={userInfo?.levelXp} />
         </ProgressTrack>
       </InfoArea>
     </ProfileCard>

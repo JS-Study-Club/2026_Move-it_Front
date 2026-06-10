@@ -6,51 +6,59 @@ import RecentDanceSection from "../components/RecentDanceSection";
 
 import { MainPageContainer } from "./MainPage.styles";
 import { api } from "../api/axios";
-import type { ApiResponse } from "../types";
-import { useEffect } from "react";
-
-
-
+import type {
+  ApiResponse,
+  HomeUserInfo,
+  MyPageData,
+  RecentChallenges,
+} from "../types";
+import { useEffect, useState } from "react";
+import { useAuthStore } from "../store/authStore";
+import { toVideoData } from "../utils/videoMapper";
+import type { VideoData } from "../types.ui";
+import { useNavigate } from "react-router-dom";
 
 export default function MyPage() {
-    
-    useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-            const response = await api.get<ApiResponse<PageHomeResponse>>(
-                "/pages/home"
-            );
-            if (response.status === 200) {
-                setUserData(response.data.data.user);
-                setUser(response.data.data.user);
-                const videos = response.data.data.highScoreDance?.map(toVideoData);
-                setHighScoreChallengeVideo(videos);
-                const recommandChallenges =
-                response.data.data.recommendedChallengeList?.map(toChallengeData);
-                setRecommandChallenge(recommandChallenges);
-                console.log("mainpage1 : ", videos);
-                console.log("mainpage2 : ", recommandChallenges);
-                console.log("mainpage3 : ", recommandChallenges);
-            }
-            } catch (error: any) {
-            console.log("유저정보 불러오기 실패", error);
-            if (error.response?.status === 401) {
-                useAuthStore.getState().logout();
-                navigate("/yun/login");
-            }
-            }
-        };
-        fetchUserData();
-    }, []);
+  const [recentDanceChallenge, setRecentDanceChallenge] = useState<
+    VideoData[] | null
+  >(null);
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState<any | null>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get<ApiResponse<any>>("/pages/my");
+        if (response.status === 200) {
+          const videos =
+            response.data.data.recentPracticeDance?.map(toVideoData);
+          setRecentDanceChallenge(videos);
+          const fetchUserData = response.data.data.user;
+          setUserData(fetchUserData);
+          console.log("디버그 : ", fetchUserData);
+        }
+      } catch (error: any) {
+        console.log("유저 정보 불러오기 실패", error);
+        if (error.response?.status === 401) {
+          useAuthStore.getState().logout();
+          navigate("/yun/login");
+        }
+      }
+    };
+    fetchUserData();
+  }, []);
 
   return (
     <MainPageContainer>
       <Header />
 
-      <MyProfileCard />
-
-      <RecentDanceSection title={"최근 연습한 춤"} />
-
+      <MyProfileCard userInfo={userData} />
+      {recentDanceChallenge && (
+        <RecentDanceSection
+          title={"최근 연습한 춤"}
+          videos={recentDanceChallenge}
+        />
+      )}
       <Nav />
     </MainPageContainer>
   );

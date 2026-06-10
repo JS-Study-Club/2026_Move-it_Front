@@ -36,24 +36,13 @@ export interface PageHomeResponse {
   recommendedChallengeList: RecommendedChallenge[];
 }
 
-export interface VideoData {
-  id: number;
-  title: string;
-  date: string;
-  score: number;
-  thumbnail: string;
+export interface MyPageData {
+  user: HomeUserInfo;
+  recentPracticeDance: RecentChallenges[];
 }
 
-export interface ChallengeData {
-  id: number;
-  artist: string;
-  song: string;
-  thumbnail: string;
-  description: string;
-  participants: string;
-  uploadDate: string;
-  duration: string;
-}
+export interface RecentChallenges extends ChallengeDataRes {}
+
 export interface YoutubeVideo {
   id: number;
   title: string;

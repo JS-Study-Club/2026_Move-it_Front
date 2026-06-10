@@ -11,7 +11,7 @@ import {
 import thumb1 from "../img/thumb1.png";
 import thumb2 from "../img/thumb2.png";
 
-import type { VideoData } from "../types";
+import type { VideoData } from "../types.ui";
 interface Props {
   title: string;
   videos?: VideoData[];

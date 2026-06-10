@@ -63,7 +63,7 @@ const getSavedTeacherImage = (): string | undefined => {
 };
 
 interface Props {
-  user: HomeUserInfo;
+  user: any;
 }
 
 export default function MyLevelCard({ user }: Props) {
@@ -85,9 +85,7 @@ export default function MyLevelCard({ user }: Props) {
       <LevelCardWrapper>
         <LevelCardInner>
           <LevelInfoArea>
-            <LevelText>{`LV.${user.level} ${
-              user.levelTitle ?? "춤추는 초보"
-            }`}</LevelText>
+            <LevelText>{`LV.${user.level} ${user.levelInfo.levelTitle}`}</LevelText>
 
             <ProgressTrack>
               <ProgressFill $progress={user.levelXp} />
