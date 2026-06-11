@@ -13,8 +13,6 @@ import {
   PracticeBtn,
 } from "../pages/MainPage.styles";
 
-import { DUMMY_USER } from "../data/user"; // 나중에 API로 교체
-
 // 이미지 임포트
 import defaultChar from "../img/tyt.png";
 import tyt from "../img/tyt.png";
@@ -22,8 +20,6 @@ import yjt from "../img/yjt.png";
 import jht from "../img/jht.png";
 import ygt from "../img/ygt.png";
 import jrt from "../img/jrt.png";
-import type { HomeUserInfo } from "../types";
-
 const teacherImages: Record<number, string> = {
   1: tyt,
   2: yjt,
