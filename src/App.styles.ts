@@ -24,8 +24,7 @@ body {
 
 export const AppContainer = styled.div`
   width: 100%;
-  max-width: 390px;
-  
+
   height: calc(var(--vh, 1vh) * 100);
   margin: 0 auto;
   background-image: url(${bgImg});

@@ -3,7 +3,8 @@ import { NavLink } from 'react-router-dom';
 
 export const BottomNavContainer = styled.nav`
   position: fixed;
-  width: 340px;
+  width: calc(100% - 50px);
+  max-width: 340px;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);

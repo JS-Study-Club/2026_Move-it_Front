@@ -21,7 +21,7 @@ const Nav: React.FC = () => {
     <BottomNavContainer>
 
       {/* 1. 홈 */}
-      <StyledNavLink to="/lee/main" end>
+      <StyledNavLink to="/main" end>
         {({ isActive }) => (
           <>
             <IconWrapper $isActive={isActive}>
@@ -40,7 +40,7 @@ const Nav: React.FC = () => {
 
       {/* 2. 검색 */}
       <StyledNavLink
-        to="/lee/search"
+        to="/search"
         className="nav-item"
       >
         {({ isActive }) => (
@@ -61,7 +61,7 @@ const Nav: React.FC = () => {
 
       {/* 3. 댄스 */}
       <StyledNavLink
-        to="/yun/camera"
+        to="/camera"
         className="nav-item"
       >
         {({ isActive }) => (
@@ -85,7 +85,7 @@ const Nav: React.FC = () => {
 
       {/* 4. 마이 */}
       <StyledNavLink
-        to="/lee/mypage"
+        to="/mypage"
         className="nav-item"
       >
         {({ isActive }) => (

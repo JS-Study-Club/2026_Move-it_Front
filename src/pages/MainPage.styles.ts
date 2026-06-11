@@ -3,7 +3,6 @@ import brickImg from '../img/main-page-brick.png';
 
 export const MainPageContainer = styled.div`
   padding: 20px 20px 100px 20px;
-  min-height: 100vh;
 `;
 
 export const ProfileSection = styled.div`
@@ -82,6 +81,7 @@ export const PracticeBtn = styled.button`
   border-radius: 8px;
   padding: 10px 16px;
   font-size: 10px;
+  font-family: Galmuri11;
 `;
 
 export const ContentSection = styled.section`

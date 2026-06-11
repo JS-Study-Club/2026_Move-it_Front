@@ -5,6 +5,62 @@ import { useNavigate } from "react-router-dom"; // ✅ 추가
 import MusicSelectSheet from "../components/MusicSelectSheet";
 import { type SelectedTrack } from "../components/MusicItem";
 import Warningimg from "../img/warningimg.svg";
+import { api } from "../api/axios";
+import { useAuthStore } from "../store/authStore";
+import { getApiErrorMessage } from "../utils/apiError";
+
+// ─── MediaPipe 리소스 경로 (라이브/업로드 분석 공통) ───────────
+const POSE_WASM_URL =
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+const POSE_MODEL_URL =
+  "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+
+// 업로드 영상 제약 / 분석 설정
+const MAX_VIDEO_DURATION = 21; // 초 — 이 값 이상이면 업로드 불가
+const ANALYZE_FPS = 10; // 백엔드 추출 FPS와 동일하게 맞춤
+
+// 백엔드 EvaluatePracticeDto.user_pose_data 와 동일한 프레임 형식
+type PoseFrame = {
+  t: number;
+  l: { x: number; y: number; z: number; v: number }[];
+};
+
+const round4 = (n: number) => Math.round(n * 10000) / 10000;
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
+// 파일에서 영상 길이(초)만 빠르게 읽어옵니다.
+const getVideoDuration = (file: File): Promise<number> =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = () => {
+      const d = v.duration;
+      URL.revokeObjectURL(url);
+      resolve(d);
+    };
+    v.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("video load error"));
+    };
+    v.src = url;
+  });
+
+// 특정 시점으로 seek 하고 프레임 디코딩이 끝날 때까지 기다립니다.
+// (일부 브라우저는 동일 위치 seek 시 'seeked' 가 안 떠서 타임아웃 폴백을 둡니다.)
+const seekTo = (video: HTMLVideoElement, time: number): Promise<void> =>
+  new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      video.removeEventListener("seeked", finish);
+      resolve();
+    };
+    video.addEventListener("seeked", finish);
+    setTimeout(finish, 300);
+    video.currentTime = time;
+  });
 
 // ─── Styled Components ────────────────────────────────────────
 const Container = styled.div`
@@ -70,6 +126,18 @@ const MusicButton = styled.button`
   &:active {
     background: rgba(0, 0, 0, 0.65);
   }
+`;
+
+// "영상 불러오기" 버튼 — MusicButton 과 동일한 룩앤필
+const UploadButton = styled(MusicButton)`
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
 `;
 
 const MusicCover = styled.img`
@@ -203,6 +271,24 @@ const LoadingOverlay = styled.div`
   padding: 6px 14px;
   border-radius: 20px;
   pointer-events: none;
+`;
+
+// 업로드 영상 분석 중 전체 화면 오버레이
+const AnalyzingOverlay = styled.div`
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+`;
+
+const AnalyzingText = styled.span`
+  color: #fff;
+  font-family: "Galmuri11", sans-serif;
+  font-size: 16px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
 `;
 
 const CountdownOverlay = styled.div`
@@ -360,8 +446,16 @@ const CameraPage = () => {
   const poseLandmarkerRef = useRef<PoseLandmarker | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  // 현재 재생/녹화 길이(하이라이트 구간 길이, 초). rAF 루프에서 최신 값을 읽기 위해 ref 사용.
+  const durationRef = useRef<number>(20);
 
   const countdownTimerRef = useRef<number | null>(null);
+  // 업로드 영상 분석용
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  // FilesetResolver 결과 캐시 (업로드 분석 시 재사용)
+  const visionRef = useRef<Awaited<
+    ReturnType<typeof FilesetResolver.forVisionTasks>
+  > | null>(null);
 
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(false);
   const [selectedTrack, setSelectedTrack] = useState<SelectedTrack | null>(null);
@@ -369,11 +463,19 @@ const CameraPage = () => {
   const [isComplete, setIsComplete] = useState<boolean>(false); // ✅ 추가
   const [progress, setProgress] = useState<number>(0);
   const [poseReady, setPoseReady] = useState<boolean>(false);
+  // 업로드 영상 포즈 분석/전송 진행 중 여부
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showBodyWarning, setShowBodyWarning] = useState<boolean>(false);
 
-  const TOTAL_DURATION = 20;
+  // 하이라이트 구간 정보가 없을 때 사용할 기본 길이(초)
+  const DEFAULT_DURATION = 20;
+
+  // 선택한 챌린지의 하이라이트 구간 길이(초). 재생/녹화/타임라인 표시에 사용됩니다.
+  const highlightDuration = selectedTrack
+    ? Math.max(1, selectedTrack.endTime - selectedTrack.startTime)
+    : DEFAULT_DURATION;
 
   // ─── 카메라 시작 ───────────────────────────────────────────
   useEffect(() => {
@@ -409,14 +511,12 @@ const CameraPage = () => {
 
     const initPose = async () => {
       try {
-        const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
+        const vision = await FilesetResolver.forVisionTasks(POSE_WASM_URL);
+        visionRef.current = vision; // 업로드 분석 시 재사용
 
         const landmarker = await PoseLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath:
-              "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+            modelAssetPath: POSE_MODEL_URL,
             delegate: "GPU",
           },
           runningMode: "VIDEO",
@@ -468,10 +568,11 @@ const CameraPage = () => {
     if (startTimeRef.current !== null) {
       const elapsed = (performance.now() - startTimeRef.current) / 1000;
 
-      if (elapsed >= TOTAL_DURATION) {
+      // 하이라이트 구간 길이만큼만 재생/녹화합니다.
+      if (elapsed >= durationRef.current) {
         startTimeRef.current = null;
         setIsPlaying(false);
-        setProgress(TOTAL_DURATION);
+        setProgress(durationRef.current);
         setShowBodyWarning(false);
         setIsComplete(true); // ✅ 완료 상태로 전환
         if (audioRef.current) audioRef.current.pause();
@@ -511,13 +612,18 @@ const CameraPage = () => {
 
   // ─── 음악 선택 핸들러 ───────────────────────────────────────
   const handleSelectTrack = (track: SelectedTrack) => {
-    if (!track.preview) {
-      alert("미리듣기를 지원하지 않는 곡입니다.");
+    if (!track.musicUrl) {
+      alert("재생할 수 있는 음원이 없습니다.");
       return;
     }
     handleStopPlayback();
     setSelectedTrack(track);
     setIsSheetOpen(false);
+
+    // 미리 음원을 로드해 두어, 재생 시 하이라이트 시작 지점으로 빠르게 이동합니다.
+    if (!audioRef.current) audioRef.current = new Audio();
+    audioRef.current.src = track.musicUrl;
+    audioRef.current.load();
   };
 
   // ─── 셔터 버튼 및 카운트다운 로직 ─────────────────────────────
@@ -544,20 +650,46 @@ const CameraPage = () => {
     }, 1000);
   };
 
-  // ─── 실제 재생 시작 ────────────────────────────────────────
+  // ─── 실제 재생 시작 (하이라이트 구간만) ──────────────────────
   const startPlayback = () => {
     if (!selectedTrack) return;
+
+    const start = selectedTrack.startTime ?? 0;
+    const end =
+      selectedTrack.endTime ?? start + DEFAULT_DURATION;
+    // rAF 루프가 참조할 재생 길이를 하이라이트 구간 길이로 설정합니다.
+    durationRef.current = Math.max(1, end - start);
 
     setIsPlaying(true);
     setProgress(0);
     startTimeRef.current = performance.now();
 
     if (!audioRef.current) audioRef.current = new Audio();
-    audioRef.current.src = selectedTrack.preview;
-    audioRef.current.volume = 1;
-    audioRef.current.play().catch((err) => {
-      console.error("오디오 재생 실패:", err);
-    });
+    const audio = audioRef.current;
+    audio.volume = 1;
+
+    // 하이라이트 시작 지점으로 이동 후 재생
+    const beginAtHighlight = () => {
+      try {
+        audio.currentTime = start;
+      } catch {
+        /* 메타데이터 미로드 등으로 실패 시 0부터 재생 */
+      }
+      audio.play().catch((err) => {
+        console.error("오디오 재생 실패:", err);
+      });
+    };
+
+    // 이미 같은 음원이 로드되어 있으면 바로, 아니면 메타데이터 로드 후 점프
+    if (audio.src === selectedTrack.musicUrl && audio.readyState >= 1) {
+      beginAtHighlight();
+    } else {
+      audio.src = selectedTrack.musicUrl;
+      audio.addEventListener("loadedmetadata", beginAtHighlight, {
+        once: true,
+      });
+      audio.load();
+    }
   };
 
   // ─── 재생 정지 ─────────────────────────────────────────────
@@ -582,10 +714,135 @@ const CameraPage = () => {
 
   // ✅ 영상보기 — 경로 직접 설정
   const handleViewVideo = () => {
-    navigate("/your/path/here");
+    navigate("/feedback");
   };
 
-  const progressPercent = (progress / TOTAL_DURATION) * 100;
+  // ─── 미리 촬영된 영상 불러오기 ────────────────────────────────
+  const handleLoadVideoClick = () => {
+    if (isAnalyzing) return;
+    if (!selectedTrack) {
+      alert("먼저 곡을 선택해주세요.");
+      return;
+    }
+    fileInputRef.current?.click();
+  };
+
+  // 업로드된 영상을 클라이언트(MediaPipe)에서 프레임 단위로 분석해
+  // 백엔드 형식({ t, l: [...] })의 포즈 JSON 으로 변환합니다.
+  const extractPoseFromVideoFile = async (file: File): Promise<PoseFrame[]> => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.src = url;
+    video.muted = true;
+    video.playsInline = true;
+
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => resolve();
+      video.onerror = () => reject(new Error("영상을 불러올 수 없습니다."));
+    });
+
+    // 라이브 루프와 타임스탬프가 충돌하지 않도록 분석 전용 랜드마커를 새로 만듭니다.
+    const vision =
+      visionRef.current ??
+      (await FilesetResolver.forVisionTasks(POSE_WASM_URL));
+    visionRef.current = vision;
+
+    const landmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: POSE_MODEL_URL, delegate: "GPU" },
+      runningMode: "VIDEO",
+      numPoses: 1,
+    });
+
+    const frames: PoseFrame[] = [];
+    const step = 1 / ANALYZE_FPS;
+    const duration = video.duration;
+
+    try {
+      for (let t = 0; t < duration; t += step) {
+        await seekTo(video, t);
+        const result = landmarker.detectForVideo(video, Math.round(t * 1000));
+        if (result.landmarks && result.landmarks.length > 0) {
+          const l = result.landmarks[0].map((p) => ({
+            x: round4(p.x),
+            y: round4(p.y),
+            z: round4(p.z),
+            v: round3((p as { visibility?: number }).visibility ?? 0),
+          }));
+          frames.push({ t: round3(t), l });
+        }
+      }
+    } finally {
+      landmarker.close();
+      URL.revokeObjectURL(url);
+    }
+
+    return frames;
+  };
+
+  const handleVideoFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // 동일 파일 재선택 허용
+    if (!file) return;
+
+    if (!selectedTrack) {
+      alert("먼저 곡을 선택해주세요.");
+      return;
+    }
+    const userId = useAuthStore.getState().user?.userId;
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    // 1) 영상 길이 검증 (20초 이상 불가)
+    let duration = 0;
+    try {
+      duration = await getVideoDuration(file);
+    } catch {
+      alert("영상을 불러올 수 없습니다.");
+      return;
+    }
+    if (!Number.isFinite(duration) || duration >= MAX_VIDEO_DURATION) {
+      alert(`${MAX_VIDEO_DURATION}초 미만의 영상만 업로드할 수 있습니다.`);
+      return;
+    }
+
+    // 2) 포즈 분석은 무조건 클라이언트에서 수행 → JSON 생성
+    setIsAnalyzing(true);
+    handleStopPlayback();
+    try {
+      const poseData = await extractPoseFromVideoFile(file);
+      if (poseData.length < 2) {
+        alert(
+          "영상에서 동작을 인식하지 못했습니다. 전신이 잘 보이는 영상을 사용해주세요."
+        );
+        return;
+      }
+
+      // 3) JSON 만 백엔드로 전송 (영상 파일은 전송하지 않음)
+      const res = await api.post(`/practice/${selectedTrack.id}/evaluate`, {
+        userId,
+        user_pose_data: poseData,
+      });
+      const data = res.data?.data ?? res.data;
+      const userChallengeId = data?.userChallengeId;
+
+      if (userChallengeId != null) {
+        navigate(`/feedback/${userChallengeId}`);
+      } else {
+        navigate("/feedback");
+      }
+    } catch (err) {
+      console.error("업로드 영상 분석/전송 실패", err);
+      alert(getApiErrorMessage(err, "영상 분석에 실패했습니다."));
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const progressPercent = (progress / highlightDuration) * 100;
 
   const getArtistName = (artist: any) => {
     if (!artist) return "Unknown";
@@ -601,8 +858,23 @@ const CameraPage = () => {
         <StyledCanvas ref={canvasRef} />
       </CameraWrapper>
 
+      {/* 미리 촬영된 영상 업로드용 숨김 input */}
+      <HiddenFileInput
+        ref={fileInputRef}
+        type="file"
+        accept="video/*"
+        onChange={handleVideoFileChange}
+      />
+
       {!poseReady && (
         <LoadingOverlay>포즈 인식 준비 중...</LoadingOverlay>
+      )}
+
+      {/* 업로드 영상 분석 중 오버레이 */}
+      {isAnalyzing && (
+        <AnalyzingOverlay>
+          <AnalyzingText>영상 분석 중...</AnalyzingText>
+        </AnalyzingOverlay>
       )}
 
       {/* ✅ 카운트다운 오버레이 */}
@@ -654,6 +926,10 @@ const CameraPage = () => {
                 )}
               </MusicButton>
 
+              <UploadButton onClick={handleLoadVideoClick} disabled={isAnalyzing}>
+                <MusicLabel>🎬 영상 불러오기 (20초 미만)</MusicLabel>
+              </UploadButton>
+
               <ShutterOuter onClick={handleStartCountdown} disabled={!selectedTrack}>
                 <ShutterInner />
               </ShutterOuter>
@@ -664,7 +940,7 @@ const CameraPage = () => {
                 <MusicInfoText>
                   {selectedTrack?.title} - {getArtistName(selectedTrack?.artist)}
                 </MusicInfoText>
-                <DurationText>{TOTAL_DURATION}s</DurationText>
+                <DurationText>{Math.round(highlightDuration)}s</DurationText>
               </InfoRow>
 
               <TimelineContainer>

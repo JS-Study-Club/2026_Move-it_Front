@@ -12,7 +12,7 @@ const Header: React.FC = () => {
                 src={BackIcon}
                 onClick={() => navigate(-1)}
             />
-            <CharChangeBtn onClick={() => navigate('/yun/select')}>
+            <CharChangeBtn onClick={() => navigate('/select')}>
                 캐릭터 변경하기
             </CharChangeBtn>
         </HeaderContainer>
