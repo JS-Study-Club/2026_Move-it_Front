@@ -1,8 +1,20 @@
-import React from 'react';
-import type { VideoData } from '../types';
-import { DanceCardContainer, CardBackgroundImage, CardContent, CardTitle, CardInfo, ReplayButton } from './DanceCard.styles';
+import React from "react";
+import type { VideoData } from "../types.ui";
+import {
+  DanceCardContainer,
+  CardBackgroundImage,
+  CardContent,
+  CardTitle,
+  CardInfo,
+  ReplayButton,
+} from "./DanceCard.styles";
 
-const DanceCard: React.FC<VideoData> = ({ title, date, score, thumbnail }) => {
+type DanceCardProps = VideoData & {
+  onReplay?: () => void;
+};
+
+const DanceCard: React.FC<DanceCardProps> = ({ title, date, score, thumbnail, onReplay }) => {
+  console.log("DanceCard 렌더링", { title, date, score, thumbnail });
   return (
     <DanceCardContainer>
       <CardBackgroundImage src={thumbnail} alt={title} />
@@ -10,9 +22,11 @@ const DanceCard: React.FC<VideoData> = ({ title, date, score, thumbnail }) => {
         <CardTitle>{title}</CardTitle>
         <CardInfo>
           <span>{date}</span>
-          <span>{score} score!!</span>
+          <span>{`${score} score!!`}</span>
         </CardInfo>
-        <ReplayButton>다시보기</ReplayButton>
+        <ReplayButton onClick={onReplay} style={onReplay ? { cursor: "pointer" } : undefined}>
+          다시보기
+        </ReplayButton>
       </CardContent>
     </DanceCardContainer>
   );

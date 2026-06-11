@@ -2,7 +2,6 @@ import styled from "styled-components";
 
 export const SearchPageContainer = styled.div`
   padding: 20px 20px 100px 20px;
-  min-height: 100vh;
 `;
 // ─── 검색창 ────────────────────────────────────────────────────────────────
 export const SearchBarWrapper = styled.div`
@@ -43,7 +42,7 @@ export const SectionBlock = styled.div`
 export const SectionTitle = styled.h2`
   font-size: 12px;
   font-weight: 400;
-  line-height: 22px
+  line-height: 22px;
   color: #000;
   margin-bottom: 10px;
 `;
@@ -155,6 +154,7 @@ export const ChallengeArtist = styled.div`
 `;
 
 export const SelectBtn = styled.button`
+  font-family: Galmuri11;
   background-color: #106aa9;
   color: white;
   border: none;

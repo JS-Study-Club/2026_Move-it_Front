@@ -1,18 +1,20 @@
-import { useState } from 'react';
-import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
-import HeaderSelect from '../components/HeaderSelect';
-import leftArrow from '../img/leftArrow.svg';
-import rightArrow from '../img/rightArrow.svg';
-import StartButton from '../components/StartButton';
-import teachersData from '../data/teachersData.json';
-import Bgimg from '../img/background.png';
+import { useState } from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import HeaderSelect from "../components/HeaderSelect";
+import leftArrow from "../img/leftArrow.svg";
+import rightArrow from "../img/rightArrow.svg";
+import StartButton from "../components/StartButton";
+import teachersData from "../data/teachersData.json";
+import Bgimg from "../img/background.png";
 
-import tyt from '../img/tyt.png';
-import yjt from '../img/yjt.png';
-import jht from '../img/jht.png';
-import ygt from '../img/ygt.png';
-import jrt from '../img/jrt.png';
+import tyt from "../img/tyt.png";
+import yjt from "../img/yjt.png";
+import jht from "../img/jht.png";
+import ygt from "../img/ygt.png";
+import jrt from "../img/jrt.png";
+import axios from "axios";
+import { api } from "../api/axios";
 
 const teacherImages: Record<number, string> = {
   1: tyt,
@@ -48,23 +50,33 @@ export default function CharacterSelectPage() {
     setCurrentIndex((prev) => (prev + 1) % teachers.length);
   };
 
-  const handleSelect = () => {
+  const handleSelect = async () => {
     // localStorage에 선택한 캐릭터 저장
-    localStorage.setItem('selectedTeacher', JSON.stringify(current));
-    localStorage.setItem('selectedTeacherImageId', String(current.id));
+    try {
+      localStorage.setItem("selectedTeacher", JSON.stringify(current));
 
-    navigate('/lee/main', {
-      state: {
-        teacher: current,
-        teacherImage: teacherImages[current.id],
-      },
-    });
+      const response = await api.patch("users/me", {
+        teacherId: current.id,
+      });
+      console.log("선택 성공");
+      navigate("/main", {
+        state: {
+          teacher: current,
+          teacherImage: teacherImages[current.id],
+        },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(error.response);
+
+        alert(error.response?.data?.message ?? "빈 교무실");
+      }
+    }
   };
 
   return (
     <PageContainer>
-
-      <HeaderSelect/>
+      <HeaderSelect />
 
       <TopSection>
         <Title>나만의 코치캐릭터 선택하기</Title>
@@ -80,7 +92,10 @@ export default function CharacterSelectPage() {
           </ArrowButton>
 
           <CharacterImageWrapper>
-            <CharacterImage src={teacherImages[current.id]} alt={current.name} />
+            <CharacterImage
+              src={teacherImages[current.id]}
+              alt={current.name}
+            />
           </CharacterImageWrapper>
 
           <ArrowButton onClick={handleNext}>
@@ -125,7 +140,7 @@ const TopSection = styled.div`
 const Title = styled.h1`
   color: #000;
   text-align: center;
-  font-family: 'Galmuri11', sans-serif;
+  font-family: "Galmuri11", sans-serif;
   font-size: 20px;
   font-style: normal;
   font-weight: 400;
@@ -134,9 +149,9 @@ const Title = styled.h1`
 `;
 
 const Subtitle = styled.p`
-  color: #4C4C4C;
+  color: #4c4c4c;
   text-align: center;
-  font-family: 'Galmuri11', sans-serif;
+  font-family: "Galmuri11", sans-serif;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;
@@ -154,10 +169,10 @@ const CarouselSection = styled.div`
 `;
 
 const Name = styled.span`
-  color: #106AA9;
+  color: #106aa9;
   text-align: center;
   -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: #FFF;
+  -webkit-text-stroke-color: #fff;
   font-family: Galmuri11;
   font-size: 12px;
   font-style: normal;
@@ -185,7 +200,7 @@ const ArrowButton = styled.button`
   gap: 10px;
   border-radius: 100px;
   border: none;
-  background: linear-gradient(0deg, #DAF0FF 0%, #DAF0FF 100%), #FFF;
+  background: linear-gradient(0deg, #daf0ff 0%, #daf0ff 100%), #fff;
 
   img {
     width: 31px;
@@ -208,10 +223,10 @@ const CharacterImage = styled.img`
 
 const Hashtag = styled.span`
   overflow: hidden;
-  color: #031F32;
+  color: #031f32;
   text-align: center;
   text-overflow: ellipsis;
-  font-family: 'Galmuri11', sans-serif;
+  font-family: "Galmuri11", sans-serif;
   font-size: 10px;
   font-style: normal;
   font-weight: 400;
@@ -227,7 +242,7 @@ const Hashtag = styled.span`
 const Comment = styled.p`
   color: #000;
   text-align: center;
-  font-family: 'Galmuri11', sans-serif;
+  font-family: "Galmuri11", sans-serif;
   font-size: 12px;
   font-style: normal;
   font-weight: 400;

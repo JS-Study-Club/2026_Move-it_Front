@@ -1,21 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import Header from '../components/Header';
 import ChallengeRow from '../components/ChallengeRow';
-import { useYoutubeSearch, usePopularChallenges } from '../hooks/useYoutubeSearch';
+import {
+    useChallengeSearch,
+    usePopularChallenges,
+    useRecommendKeywords,
+} from '../hooks/useChallengeSearch';
 import search from '../img/search-icon.svg';
 import Nav from '../components/Nav';
 
 import {
     SearchPageContainer, SearchBarWrapper, SearchIcon,
     SearchInput, ClearBtn, SectionBlock, SectionTitle, TagRow, RecentTag, DeleteBtn, SuggestTag, ChallengeList,
-    SelectBtn, StatusText, NoResultText,
+    StatusText, NoResultText,
 } from './SearchPage.styles';
-
-// 추천 검색어 (기획 단계에서 큐레이션)
-const SUGGESTED_TAGS = [
-    'Magnetic', 'Next Level', 'Really Like You', 'Attention',
-    '신나는', '색시한', 'K-POP',
-];
 
 // 최근 검색어 localStorage 키
 const RECENT_SEARCHES_KEY = 'moveit_recent_searches';
@@ -52,15 +50,18 @@ export default function SearchPage() {
         saveRecentSearches(updated);
     };
 
-    const { searchResults, searchLoading, searchError, hasSearched, nextPageToken, searchYoutube, clearSearch } = useYoutubeSearch(query);
+    // ── 백엔드에서 데이터 가져오기 ──────────────────────────────────────────
+    const { searchResults, searchLoading, searchError, hasSearched, clearSearch } =
+        useChallengeSearch(query);
     const { popularChallenges, loading, error } = usePopularChallenges();
+    const { keywords: recommendKeywords } = useRecommendKeywords();
 
     // ── 검색 실행 (태그·최근검색어 클릭 시) ─────────────────────────────
     const handleSearch = useCallback(
         (keyword: string) => {
             if (!keyword.trim()) return;
             addRecentSearch(keyword);
-            setQuery(keyword); // query가 바뀌면 아래 useEffect가 debounce 검색 실행
+            setQuery(keyword); // query가 바뀌면 훅 내부의 debounce 검색 실행
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [recentSearches]
@@ -87,7 +88,7 @@ export default function SearchPage() {
                         const val = e.target.value;
                         setQuery(val);
 
-                        // 🌟 글자가 모두 지워지면 여기서 즉시 상태를 비워줍니다!
+                        // 글자가 모두 지워지면 즉시 검색 상태를 비웁니다.
                         if (!val.trim()) { clearSearch(); }
                     }}
                     onKeyDown={handleKeyDown}
@@ -96,8 +97,6 @@ export default function SearchPage() {
                 {query && (
                     <ClearBtn onClick={() => {
                         setQuery('');
-
-                        // 🌟 X 버튼을 눌렀을 때도 여기서 즉시 상태를 비워줍니다!
                         clearSearch();
                     }}>✕</ClearBtn>
                 )}
@@ -119,15 +118,9 @@ export default function SearchPage() {
 
                     {!searchLoading && searchResults.length > 0 && (
                         <ChallengeList>
-                            {searchResults.map((video, idx) => (
-                                <ChallengeRow key={`${video.id}-${idx}`} video={video} />
+                            {searchResults.map((challenge) => (
+                                <ChallengeRow key={challenge.id} challenge={challenge} />
                             ))}
-
-                            {nextPageToken && (
-                                <SelectBtn onClick={() => searchYoutube(query, nextPageToken)}>
-                                    {searchLoading ? '불러오는 중...' : '결과 더 보기 ▼'}
-                                </SelectBtn>
-                            )}
                         </ChallengeList>
                     )}
                 </SectionBlock>
@@ -156,17 +149,19 @@ export default function SearchPage() {
                         </SectionBlock>
                     )}
 
-                    {/* 추천 검색어 */}
-                    <SectionBlock>
-                        <SectionTitle>추천 검색어</SectionTitle>
-                        <TagRow>
-                            {SUGGESTED_TAGS.map((tag) => (
-                                <SuggestTag key={tag} onClick={() => handleSearch(tag)}>
-                                    {tag}
-                                </SuggestTag>
-                            ))}
-                        </TagRow>
-                    </SectionBlock>
+                    {/* 추천 검색어 (백엔드 제공) */}
+                    {recommendKeywords.length > 0 && (
+                        <SectionBlock>
+                            <SectionTitle>추천 검색어</SectionTitle>
+                            <TagRow>
+                                {recommendKeywords.map((tag) => (
+                                    <SuggestTag key={tag} onClick={() => handleSearch(tag)}>
+                                        {tag}
+                                    </SuggestTag>
+                                ))}
+                            </TagRow>
+                        </SectionBlock>
+                    )}
 
                     {/* 인기 챌린지 */}
                     <SectionBlock>
@@ -177,8 +172,8 @@ export default function SearchPage() {
 
                         {!loading && !error && (
                             <ChallengeList>
-                                {popularChallenges.map((video, idx) => (
-                                    <ChallengeRow key={`${video.id}-${idx}`} video={video} rank={idx + 1} />
+                                {popularChallenges.map((challenge, idx) => (
+                                    <ChallengeRow key={challenge.id} challenge={challenge} rank={idx + 1} />
                                 ))}
                             </ChallengeList>
                         )}
@@ -189,4 +184,3 @@ export default function SearchPage() {
         </SearchPageContainer>
     );
 };
-
