@@ -55,7 +55,7 @@ export default function CharacterSelectPage() {
     try {
       localStorage.setItem("selectedTeacher", JSON.stringify(current));
 
-      const response = await api.patch("users/me", {
+      await api.patch("users/me", {
         teacherId: current.id,
       });
       console.log("선택 성공");
