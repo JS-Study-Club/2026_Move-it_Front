@@ -22,7 +22,7 @@ export default function SignupPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSignup = async (e?: React.InputEvent) => {
+  const handleSignup = async (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (!form.name || !form.email || !form.id || !form.password) {
       alert("모든 항목을 입력해주세요.");

@@ -1,8 +1,6 @@
 // 마이페이지에 들어가는 프로필, 레벨 카드 컴포넌트
 import { useLocation } from "react-router-dom";
 import styled from "styled-components";
-import { DUMMY_USER } from "../data/user";
-
 // 이미지 임포트
 import defaultChar from "../img/tyt.png";
 import tyt from "../img/tyt.png";
@@ -10,9 +8,6 @@ import yjt from "../img/yjt.png";
 import jht from "../img/jht.png";
 import ygt from "../img/ygt.png";
 import jrt from "../img/jrt.png";
-import { useAuthStore } from "../store/authStore";
-import type { HomeUserInfo } from "../types";
-
 const teacherImages: Record<number, string> = {
   1: tyt,
   2: yjt,
@@ -32,13 +27,6 @@ interface LocationState {
   teacher?: Teacher;
   teacherImage?: string;
 }
-
-const getLevelTitle = (level: number): string => {
-  if (level >= 50) return "전설의 댄스 마스터";
-  if (level >= 30) return "무대를 장악하는 댄스 스타";
-  if (level >= 10) return "리듬을 깨우친 댄스 유망주";
-  return "쑥쑥 자라는 댄스신동";
-};
 
 const getSavedTeacher = (): Teacher | undefined => {
   try {
