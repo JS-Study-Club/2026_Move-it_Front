@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import type {
   ApiResponse,
-  HighScoreChallengeVideo,
   HomeUserInfo,
   PageHomeResponse,
-  RecommendedChallenge,
-  YouTubeItem,
 } from "../types";
 
 import Header from "../components/Header";
@@ -66,7 +63,7 @@ export default function MainPage() {
         console.log("유저정보 불러오기 실패", error);
         if (error.response?.status === 401) {
           useAuthStore.getState().logout();
-          navigate("/yun/login");
+          navigate("/login");
         }
       }
     };

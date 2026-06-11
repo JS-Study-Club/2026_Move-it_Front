@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+import { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import SearchIconImg from "../img/search-icon.svg";
-import MusicItem, {
-  type DeezerTrack,
-  type SelectedTrack,
-} from "../components/MusicItem";
+import MusicItem, { type SelectedTrack } from "../components/MusicItem";
+import {
+  useChallengeSearch,
+  usePopularChallenges,
+} from "../hooks/useChallengeSearch";
+import type { ChallengeSearchResult } from "../types";
 
 // ─── Types ────────────────────────────────────────────────────
 interface MusicSelectSheetProps {
@@ -13,67 +15,22 @@ interface MusicSelectSheetProps {
   selectedTrackId?: number;
 }
 
-interface DeezerSearchResponse {
-  data: any[];
-}
-
-// ─── 🌟 인터넷에서 무조건 작동하는 고화질 썸네일 & 실제 사운드 데이터 ───
-const DEFAULT_KPOP_TRACKS: any[] = [
-  {
-    id: 9991,
-    title: "Bang Bang (Challenge Ver.)",
-    artist: { name: "Ive" },
-    album: {
-      cover_medium:
-        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&auto=format&fit=crop&q=60",
-    },
-    duration: 20,
-    preview:
-      "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-  },
-  {
-    id: 9992,
-    title: "Really Like You",
-    artist: { name: "BABYMONSTER" },
-    album: {
-      cover_medium:
-        "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=300&auto=format&fit=crop&q=60",
-    },
-    duration: 20,
-    preview:
-      "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-  },
-  {
-    id: 9993,
-    title: "Bubble Gum",
-    artist: { name: "NewJeans" },
-    album: {
-      cover_medium:
-        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&auto=format&fit=crop&q=60",
-    },
-    duration: 20,
-    preview:
-      "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-  },
-];
-
-// ─── 🌐 CORS 에러 우회 검색 API ───────────────────────────────────────
-const searchDeezer = async (query: string): Promise<any[]> => {
-  try {
-    const res = await fetch(
-      `/api-deezer/search?q=${encodeURIComponent(query)}&limit=20`
-    );
-
-    if (!res.ok) {
-      throw new Error("Deezer API 요청 실패");
-    }
-
-    const data: DeezerSearchResponse = await res.json();
-    return data.data ?? [];
-  } catch (err) {
-    console.error("Deezer 검색 에러:", err);
-    return [];
-  }
+// 백엔드 챌린지 → 카메라 재생용 SelectedTrack 변환
+const toSelectedTrack = (c: ChallengeSearchResult): SelectedTrack => {
+  const startTime = c.start_time ?? 0;
+  // end_time 이 없으면 전체 길이로 대체합니다.
+  const endTime =
+    c.end_time != null ? c.end_time : startTime + (c.length ?? 0);
+  return {
+    id: c.id,
+    title: c.name,
+    artist: c.artist,
+    coverUrl: c.music_image_url ?? "",
+    musicUrl: c.music_url,
+    startTime,
+    endTime,
+    length: c.length ?? 0,
+  };
 };
 
 // ─── Animations ───────────────────────────────────────────────
@@ -205,46 +162,18 @@ const MusicSelectSheet = ({
   selectedTrackId,
 }: MusicSelectSheetProps) => {
   const [query, setQuery] = useState<string>("");
-  const [tracks, setTracks] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 백엔드에서 검색/인기 챌린지를 가져옵니다.
+  const { searchResults, searchLoading, hasSearched } =
+    useChallengeSearch(query);
+  const { popularChallenges, loading: popularLoading } = usePopularChallenges();
 
-  const handleSearch = useCallback(async (value: string) => {
-    if (!value.trim()) {
-      setTracks([]);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const results = await searchDeezer(value);
-      setTracks(results);
-    } catch (err) {
-      console.error(err);
-      setTracks([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const value = e.target.value;
-    setQuery(value);
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
-    debounceRef.current = setTimeout(() => {
-      handleSearch(value);
-    }, 500);
-  };
-
-  const displayTracks = query ? tracks : DEFAULT_KPOP_TRACKS;
+  const isSearching = query.trim().length > 0;
+  const rawList: ChallengeSearchResult[] = isSearching
+    ? searchResults
+    : popularChallenges;
+  const tracks = rawList.map(toSelectedTrack);
+  const listLoading = isSearching ? searchLoading : popularLoading;
 
   return (
     <>
@@ -262,31 +191,40 @@ const MusicSelectSheet = ({
             <SearchInput
               placeholder="찾고있는 댄스챌린지를 입력해주세요"
               value={query}
-              onChange={handleInputChange}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </SearchBar>
         </Header>
 
         <ListContainer>
-          {loading && <StatusText>검색 중...</StatusText>}
+          {listLoading && <StatusText>불러오는 중...</StatusText>}
 
-          {!loading && query && tracks.length === 0 && (
-            <StatusText>검색 결과가 없습니다.</StatusText>
+          {!listLoading &&
+            isSearching &&
+            hasSearched &&
+            tracks.length === 0 && (
+              <StatusText>검색 결과가 없습니다.</StatusText>
+            )}
+
+          {!listLoading && !isSearching && tracks.length === 0 && (
+            <StatusText>등록된 챌린지가 없습니다.</StatusText>
           )}
 
-          {!loading && displayTracks.length > 0 && (
+          {!listLoading && tracks.length > 0 && (
             <>
-              <SectionLabel>K-pop</SectionLabel>
+              <SectionLabel>
+                {isSearching ? "검색 결과" : "인기 챌린지"}
+              </SectionLabel>
 
-              {displayTracks.map((track, index) => (
-                <div key={`rec-${track.id}`}>
+              {tracks.map((track, index) => (
+                <div key={track.id}>
                   <MusicItem
-                    track={track as any}
+                    track={track}
                     isSelected={selectedTrackId === track.id}
                     onSelect={onSelect}
                   />
 
-                  {index < displayTracks.length - 1 && <Divider />}
+                  {index < tracks.length - 1 && <Divider />}
                 </div>
               ))}
             </>

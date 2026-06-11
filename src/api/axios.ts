@@ -53,7 +53,7 @@ api.interceptors.response.use(
         return axios(originalRequest);
       } catch (refreshError) {
         useAuthStore.getState().logout();
-        window.location.href = "/yun/login";
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       }
     }

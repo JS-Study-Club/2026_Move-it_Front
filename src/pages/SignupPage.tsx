@@ -6,7 +6,7 @@ import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { api } from "../api/axios";
-import axios from "axios";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -29,25 +29,21 @@ export default function SignupPage() {
       return;
     }
     try {
-      const response = await axios.post(
-        "http://localhost:3000/api/auth/signup",
-        {
-          userId: form.id,
-          username: form.name,
-          email: form.email,
-          password: form.password,
-          teacherId: 1,
-        }
-      );
+      // 성공 시 서버는 204 No Content 를 반환합니다.
+      // axios 는 2xx 면 resolve 하므로, 여기까지 왔으면 성공입니다.
+      await api.post("auth/signup", {
+        userId: form.id,
+        username: form.name,
+        email: form.email,
+        password: form.password,
+        teacherId: 1,
+      });
 
-      if (response.status === 201 || response.status === 200) {
-        alert("회원가입 완료!");
-        navigate("/yun/login");
-      }
+      alert("회원가입 완료!");
+      navigate("/login");
     } catch (error) {
       console.error("회원가입 에러: ", error);
-      if (error.response) alert(error.response.data.message || "회원가입 실패");
-      else alert("서버 연결 실패");
+      alert(getApiErrorMessage(error, "회원가입에 실패했습니다."));
     }
   };
 
@@ -61,23 +57,27 @@ export default function SignupPage() {
         <InputField
           label="이름"
           placeholder="본인 이름을 입력해주세요."
+          value={form.name}
           onChange={handleChange("name")}
         />
         <InputField
           label="이메일"
           placeholder="이메일을 입력해주세요."
           type="email"
+          value={form.email}
           onChange={handleChange("email")}
         />
         <InputField
           label="아이디"
           placeholder="아이디를 입력해주세요."
+          value={form.id}
           onChange={handleChange("id")}
         />
         <InputField
           label="비밀번호"
           placeholder="비밀번호를 입력해주세요."
           type="password"
+          value={form.password}
           onChange={handleChange("password")}
         />
         <BottomSection>
@@ -85,7 +85,7 @@ export default function SignupPage() {
             <StartButton text="회원가입" onClick={handleSignup} type="submit" />
             <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
             <Divider>|</Divider>
-            <LinkText onClick={() => navigate("/yun/login")}>로그인</LinkText>
+            <LinkText onClick={() => navigate("/login")}>로그인</LinkText>
           </LinkRow>
         </BottomSection>
       </FormSection>

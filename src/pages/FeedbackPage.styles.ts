@@ -90,10 +90,15 @@ export const TabCircle = styled.button<{ $active?: boolean }>`
   width: 93px;
   height: 133px;
   border-radius: 100px;
-  border: none;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  // font-size: 22px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease,
+    border-color 0.15s ease, background 0.15s ease;
+
+  /* 선택된 탭: 옅은 배경 + 파란 테두리, 미선택 탭: 흰 배경 + 그림자 */
+  background: ${p => (p.$active ? '#F8F8F8' : '#FFFDF8')};
+  border: 1.5px solid ${p => (p.$active ? '#106AA9' : 'transparent')};
+  box-shadow: ${p =>
+    p.$active ? 'none' : '2px 3px 16px rgba(16, 106, 169, 0.22)'};
 
   &:active { transform: scale(0.93); }
   img{
@@ -101,14 +106,13 @@ export const TabCircle = styled.button<{ $active?: boolean }>`
   }
 `;
 
-export const TabLabel = styled.span`
+export const TabLabel = styled.span<{ $active?: boolean }>`
   text-align: center;
   font-family: Galmuri11;
   font-size: 14px;
   font-weight: 400;
-  color: #333;
+  color: ${p => (p.$active ? '#106AA9' : '#031F32')};
   display: block;
-  text-align: center;
 `;
 
 export const TabItem = styled.div`

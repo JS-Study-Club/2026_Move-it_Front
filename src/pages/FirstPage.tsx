@@ -17,7 +17,7 @@ export default function FirstPage() {
       <BottomSection>
       <StartButton 
         text="시작하기!" 
-        onClick={() => navigate('/yun/login')} 
+        onClick={() => navigate('/login')}
       />
       </BottomSection>
     </PageContainer>

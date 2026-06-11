@@ -12,6 +12,7 @@ export const LogoImg = styled.img`
 `;
 
 export const CharChangeBtn = styled.button`
+  font-family: Galmuri11;
   background-color: #106AA9;
   color: white;
   border: none;

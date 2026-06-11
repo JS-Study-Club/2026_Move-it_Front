@@ -1,52 +1,62 @@
-import React from 'react';
-import type { YoutubeVideo } from '../types';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import type { ChallengeSearchResult } from "../types";
 import {
-    ChallengeRows as ChallengeRowContainer, RankNumber, ChallengeThumbnail, ChallengeInfo,
-    ChallengeName, ChallengeArtist, SelectBtn, ThumbnailPlaceholder,
-} from '../pages/SearchPage.styles';
-
-/* 이미지에 보이는 &#39;나 &amp; 같은 문자는 YouTube API가 데이터를 넘겨줄 때 사용하는 HTML 엔티티(Entity)입니다. 
-/* 브라우저가 이것을 일반 텍스트(예: '나 &)로 인식하게 하려면 렌더링 전에 디코딩(Decoding) 과정이 필요합니다. */
-const decodeHTMLEntities = (text: string) => {
-    const textArea = document.createElement('textarea');
-    textArea.innerHTML = text;
-    return textArea.value;
-};
+  ChallengeRows as ChallengeRowContainer,
+  RankNumber,
+  ChallengeThumbnail,
+  ChallengeInfo,
+  ChallengeName,
+  ChallengeArtist,
+  SelectBtn,
+  ThumbnailPlaceholder,
+} from "../pages/SearchPage.styles";
 
 interface Props {
-    video: YoutubeVideo;
-    rank?: number; // 전달되면 순위 표시, 없으면 생략
+  challenge: ChallengeSearchResult;
+  rank?: number; // 전달되면 순위 표시, 없으면 생략
 }
 
-const ChallengeRow: React.FC<Props> = ({ video, rank }) => {
-    const handleSelect = () => {
-        window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank');
-    };
+const ChallengeRow: React.FC<Props> = ({ challenge, rank }) => {
+  const navigate = useNavigate();
 
-    return (
-        <ChallengeRowContainer>
-            {rank !== undefined && <RankNumber>{rank}</RankNumber>}
+  // 곡 선택 시 연습(카메라) 페이지로 이동하면서 선택한 챌린지 정보를 전달합니다.
+  const handleSelect = () => {
+    navigate("/camera", {
+      state: {
+        challengeId: challenge.id,
+        name: challenge.name,
+        artist: challenge.artist,
+        musicUrl: challenge.music_url,
+        thumbnailUrl: challenge.music_image_url,
+      },
+    });
+  };
 
-            {video.thumbnailUrl ? (
-                <ChallengeThumbnail
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                />
-            ) : (
-                <ThumbnailPlaceholder>🎵</ThumbnailPlaceholder>
-            )}
+  return (
+    <ChallengeRowContainer>
+      {rank !== undefined && <RankNumber>{rank}</RankNumber>}
 
-            <ChallengeInfo>
-                <ChallengeName>{decodeHTMLEntities(video.title)}</ChallengeName>
-                <ChallengeArtist>{decodeHTMLEntities(video.channelTitle)}</ChallengeArtist>
-            </ChallengeInfo>
+      {challenge.music_image_url ? (
+        <ChallengeThumbnail
+          src={challenge.music_image_url}
+          alt={challenge.name}
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = "none";
+          }}
+        />
+      ) : (
+        <ThumbnailPlaceholder>🎵</ThumbnailPlaceholder>
+      )}
 
-            <SelectBtn onClick={handleSelect}>곡 선택하기</SelectBtn>
-        </ChallengeRowContainer>
-    );
+      <ChallengeInfo>
+        <ChallengeName>{challenge.name}</ChallengeName>
+        <ChallengeArtist>{challenge.artist}</ChallengeArtist>
+      </ChallengeInfo>
+
+      <SelectBtn onClick={handleSelect}>곡 선택하기</SelectBtn>
+    </ChallengeRowContainer>
+  );
 };
 
 export default ChallengeRow;

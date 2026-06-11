@@ -8,7 +8,7 @@ const Header: React.FC = () => {
     return (
         <HeaderContainer>
             <LogoImg src={logo} alt="MoveIt Logo" />
-            <CharChangeBtn onClick={() => navigate('/yun/select')}>캐릭터 변경하기</CharChangeBtn>
+            <CharChangeBtn onClick={() => navigate('/select')}>캐릭터 변경하기</CharChangeBtn>
         </HeaderContainer>
     );
 };

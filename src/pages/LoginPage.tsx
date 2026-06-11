@@ -7,6 +7,7 @@ import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import { api } from "../api/axios";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -32,17 +33,11 @@ export default function LoginPage() {
         setAccessToken(response.data.data.accessToken);
         setUser(response.data.data.user);
 
-        navigate("/yun/select");
+        navigate("/select");
       }
     } catch (error) {
       console.error("로그인 에러: ", error);
-      if (error.response) {
-        alert(
-          error.response.data.data.message || "로그인 정보가 올바르지 않습니다"
-        );
-      } else {
-        alert("서버와의 통신 실패");
-      }
+      alert(getApiErrorMessage(error, "로그인 정보가 올바르지 않습니다."));
     }
   };
 
@@ -81,7 +76,7 @@ export default function LoginPage() {
         <LinkRow>
           <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
           <Divider>|</Divider>
-          <LinkText onClick={() => navigate("/yun/signup")}>회원가입</LinkText>
+          <LinkText onClick={() => navigate("/signup")}>회원가입</LinkText>
         </LinkRow>
       </BottomSection>
     </PageContainer>

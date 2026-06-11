@@ -1,19 +1,19 @@
 import styled from "styled-components";
 
-export interface DeezerTrack {
-  id: number;
-  title: string;
-  artist: { name: string };
-  album: { cover_medium: string };
-  duration: number;
-  coverUrl: string; // 👈 추가!
-  preview: string;
+// 백엔드 챌린지에서 가져온 곡 정보를 카메라 재생에 필요한 형태로 정규화한 타입.
+export interface SelectedTrack {
+  id: number; // 챌린지 id
+  title: string; // 곡 제목 (challenge.name)
+  artist: string;
+  coverUrl: string; // 썸네일 (music_image_url)
+  musicUrl: string; // 전체 음원 (music_url)
+  startTime: number; // 하이라이트 시작 (초)
+  endTime: number; // 하이라이트 끝 (초)
+  length: number; // 전체 길이 (초)
 }
 
-export type SelectedTrack = DeezerTrack;
-
 interface MusicItemProps {
-  track: DeezerTrack;
+  track: SelectedTrack;
   isSelected: boolean;
   onSelect: (track: SelectedTrack) => void;
 }
@@ -94,19 +94,23 @@ const ArrowIcon = styled.svg<{ $isSelected: boolean }>`
 const MusicItem = ({ track, isSelected, onSelect }: MusicItemProps) => {
   // 초단위 데이터를 00:00 포맷으로 변경
   const formatDuration = (s: number) => {
-    const mins = Math.floor(s / 60).toString().padStart(2, "0");
-    const secs = (s % 60).toString().padStart(2, "0");
+    const safe = Math.max(0, Math.round(s));
+    const mins = Math.floor(safe / 60).toString().padStart(2, "0");
+    const secs = (safe % 60).toString().padStart(2, "0");
     return `${mins}:${secs}`;
   };
+
+  // 하이라이트 구간 길이를 표시합니다.
+  const highlightLength = track.endTime - track.startTime;
 
   return (
     <ItemContainer onClick={() => onSelect(track)}>
       <LeftSection>
-        <AlbumCover src={track.album.cover_medium} alt={track.title} />
+        <AlbumCover src={track.coverUrl} alt={track.title} />
         <InfoBox>
           <TrackTitle>{track.title}</TrackTitle>
-          <ArtistName>{track.artist.name}</ArtistName>
-          <Duration>{formatDuration(track.duration)}</Duration>
+          <ArtistName>{track.artist}</ArtistName>
+          <Duration>하이라이트 {formatDuration(highlightLength)}</Duration>
         </InfoBox>
       </LeftSection>
 

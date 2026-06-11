@@ -59,7 +59,7 @@ export default function CharacterSelectPage() {
         teacherId: current.id,
       });
       console.log("선택 성공");
-      navigate("/lee/main", {
+      navigate("/main", {
         state: {
           teacher: current,
           teacherImage: teacherImages[current.id],
