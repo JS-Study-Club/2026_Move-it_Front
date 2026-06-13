@@ -10,5 +10,6 @@ export const toVideoData = (item: HighScoreChallengeVideo): VideoData => {
     date: item.releaseDate,
     score: item.score,
     thumbnail: item.imgUrl,
+    userChallengeId: item.userChallengeId,
   };
 };

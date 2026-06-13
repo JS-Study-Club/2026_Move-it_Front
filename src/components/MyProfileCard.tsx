@@ -124,8 +124,16 @@ export default function MyProfileCard({ userInfo }: Props) {
   const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
 
+  // 서버에 저장된 teacher 값을 최우선으로 사용합니다(변경 즉시 반영 + 유지).
+  const serverTeacherId: number | undefined =
+    userInfo?.teacherId ?? userInfo?.teacher_character_id;
+  const serverTeacherImage = serverTeacherId
+    ? teacherImages[serverTeacherId]
+    : undefined;
+
   const teacher = stateTeacher ?? getSavedTeacher();
-  const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
+  const teacherImage =
+    serverTeacherImage ?? stateTeacherImage ?? getSavedTeacherImage();
   const charImg = teacherImage ?? defaultChar;
 
   return (
@@ -138,9 +146,12 @@ export default function MyProfileCard({ userInfo }: Props) {
       {/* 이름 + 레벨 + 프로그레스바 */}
       <InfoArea>
         <UserName>{userInfo?.username}</UserName>
-        <LevelText>{`LV.${userInfo?.level} ${userInfo?.levelInfo.levelTitle}`}</LevelText>
+        {/* LV. + 레벨번호(1~) + 칭호 */}
+        <LevelText>{`LV. ${userInfo?.level ?? 1} ${
+          userInfo?.levelTitle ?? ""
+        }`}</LevelText>
         <ProgressTrack>
-          <ProgressFill $progress={userInfo?.levelXp} />
+          <ProgressFill $progress={userInfo?.levelProgress ?? 0} />
         </ProgressTrack>
       </InfoArea>
     </ProfileCard>

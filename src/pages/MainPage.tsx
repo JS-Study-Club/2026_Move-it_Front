@@ -45,7 +45,7 @@ export default function MainPage() {
     const fetchUserData = async () => {
       try {
         const response = await api.get<ApiResponse<PageHomeResponse>>(
-          "/pages/home"
+          "pages/home"
         );
         if (response.status === 200) {
           if (!user) setUser(response.data.data.user);
@@ -55,9 +55,6 @@ export default function MainPage() {
           const recommandChallenges =
             response.data.data.recommendedChallengeList?.map(toChallengeData);
           setRecommandChallenge(recommandChallenges);
-          console.log("mainpage1 : ", videos);
-          console.log("mainpage2 : ", recommandChallenges);
-          console.log("mainpage3 : ", recommandChallenges);
         }
       } catch (error: any) {
         console.log("유저정보 불러오기 실패", error);
@@ -70,8 +67,6 @@ export default function MainPage() {
     fetchUserData();
   }, []);
 
-  console.log("mainpage : ", userData);
-
   return (
     <MainPageContainer>
       <Header />
@@ -83,6 +78,11 @@ export default function MainPage() {
         <RecentDanceSection
           title="높은 점수를 받은 댄스 영상"
           videos={highScoreChallengeVideo}
+          onCardClick={(video) => {
+            if (video.userChallengeId != null) {
+              navigate(`/feedback/${video.userChallengeId}`);
+            }
+          }}
         />
       )}
       {/* 4. 추천 챌린지 렌더링 */}
@@ -93,7 +93,13 @@ export default function MainPage() {
             <ChallengeItem key={challenge.id} {...challenge} />
           ))} */}
           {recommandChallenge &&
-            recommandChallenge?.map((v) => <ChallengeItem key={v.id} {...v} />)}
+            recommandChallenge?.map((v) => (
+              <ChallengeItem
+                key={v.id}
+                {...v}
+                onStart={(id) => navigate("/camera", { state: { challengeId: id } })}
+              />
+            ))}
         </ChallengeList>
       </ContentSection>
 

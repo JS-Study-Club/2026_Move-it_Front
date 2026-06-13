@@ -1,35 +1,22 @@
 import { create } from "zustand";
 import type { HomeUserInfo } from "../types";
 
-// interface UserHomeInfo {
-//   username: string;
-//   level: number;
-//   levelXp: number;
-//   levelTitle: string;
-//   teacherId: number;
-// }
+// 인증 토큰(access/refresh)은 백엔드가 httpOnly 쿠키로만 관리합니다.
+// 프론트(JS)는 토큰을 보관/접근하지 않으며, 요청 시 쿠키가 자동 전송됩니다(withCredentials).
+// 과거 버전에서 localStorage 에 저장해 두었던 accessToken 이 남아있다면 제거합니다.
+if (typeof window !== "undefined") {
+  localStorage.removeItem("accessToken");
+}
 
 interface AuthState {
   user: HomeUserInfo | null;
-  accessToken: string | null;
 
   setUser: (user: HomeUserInfo | null) => void;
-  setAccessToken: (token: string | null) => void;
   logout: () => void;
 }
-//TODO : refresh 로직
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  accessToken: localStorage.getItem("accessToken"),
   setUser: (user) => set({ user }),
-  setAccessToken: (token) => {
-    if (token) localStorage.setItem("accessToken", token);
-    else localStorage.removeItem("accessToken");
-    set({ accessToken: token });
-  },
-  logout: () => {
-    localStorage.removeItem("accessToken");
-
-    set({ user: null, accessToken: null });
-  },
+  logout: () => set({ user: null }),
 }));

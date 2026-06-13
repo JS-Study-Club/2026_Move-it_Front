@@ -15,7 +15,7 @@ export default function LoginPage() {
   // 1. 아이디와 비밀번호 상태 관리
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
-  const { setAccessToken, setUser } = useAuthStore();
+  const { setUser } = useAuthStore();
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -26,14 +26,13 @@ export default function LoginPage() {
       });
 
       if (response.status === 200) {
-        console.log("로그인 성공", response.data, " :: ");
-        console.log(response.data.data.accessToken);
+        // accessToken 은 httpOnly 쿠키로 내려오므로 응답 body 에는 없습니다.
         alert("로그인에 성공햇습니다");
 
-        setAccessToken(response.data.data.accessToken);
         setUser(response.data.data.user);
 
-        navigate("/select");
+        // 캐릭터는 회원가입 때 이미 선택했으므로 로그인 후엔 바로 메인으로 이동합니다.
+        navigate("/main");
       }
     } catch (error) {
       console.error("로그인 에러: ", error);
