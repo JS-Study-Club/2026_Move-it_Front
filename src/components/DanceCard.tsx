@@ -14,7 +14,7 @@ type DanceCardProps = VideoData & {
 };
 
 const DanceCard: React.FC<DanceCardProps> = ({ title, date, score, thumbnail, onReplay }) => {
-  console.log("DanceCard 렌더링", { title, date, score, thumbnail });
+  // console.log("DanceCard 렌더링", { title, date, score, thumbnail });
   return (
     <DanceCardContainer>
       <CardBackgroundImage src={thumbnail} alt={title} />

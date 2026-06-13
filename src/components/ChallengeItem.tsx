@@ -11,7 +11,12 @@ import {
   CardTags,
 } from "./ChallengeItem.styles";
 
-const ChallengeItem: React.FC<ChallengeData> = ({
+interface Props extends ChallengeData {
+  onStart?: (id: number) => void;
+}
+
+const ChallengeItem: React.FC<Props> = ({
+  id,
   artist,
   song,
   description,
@@ -19,6 +24,7 @@ const ChallengeItem: React.FC<ChallengeData> = ({
   participants,
   duration,
   uploadDate,
+  onStart,
 }) => {
   return (
     <ChallengeItemContainer>
@@ -33,7 +39,7 @@ const ChallengeItem: React.FC<ChallengeData> = ({
           <CardSub>{description}</CardSub>
         </CardTexts>
       </CardHeader>
-      <StartBtn>챌린지 시작</StartBtn>
+      <StartBtn onClick={() => onStart?.(id)}>챌린지 시작</StartBtn>
       <CardTags>
         <span># 조회수 {participants}회</span>
         <span># {duration} 안무</span>

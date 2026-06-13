@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
+import { useAuthStore } from '../store/authStore';
 import char from '../img/tyt.png';
+import tyt from '../img/tyt.png';
+import yjt from '../img/yjt.png';
+import jht from '../img/jht.png';
+import ygt from '../img/ygt.png';
+import jrt from '../img/jrt.png';
+
+const teacherImages: Record<number, string> = {
+  1: tyt,
+  2: yjt,
+  3: jht,
+  4: ygt,
+  5: jrt,
+};
 import checkIcon from '../img/checkIcon - feedback.svg';
 import rhythemIcon from '../img/rhythm.png';
 import accuracyIcon from '../img/accuracy.png';
@@ -114,6 +128,7 @@ type TabKey = (typeof TAB_CONFIG)[number]['key'];
 export default function FeedbackPage() {
     const navigate = useNavigate();
     const { userChallengeId } = useParams<{ userChallengeId?: string }>();
+    const user = useAuthStore((state) => state.user);
     const [activeTab, setActiveTab] = useState<TabKey>('rhythm');
 
     const [result, setResult] = useState<PracticeResult | null>(null);
@@ -129,9 +144,8 @@ export default function FeedbackPage() {
             setError(null);
             try {
                 const res = await api.get<ApiResponse<PracticeResult>>(
-                    `/practice/result/${userChallengeId}`
+                    `practice/result/${userChallengeId}`
                 );
-                console.log('연습 결과 불러오기 성공', res.data);
                 setResult(res.data.data);
             } catch (err: any) {
                 console.error('연습 결과 불러오기 실패', err);
@@ -171,6 +185,8 @@ export default function FeedbackPage() {
 
     const displayScore = categoryScore;
 
+    const charImg = teacherImages[user?.teacherId ?? 1] ?? char;
+
     return (
         <FeedbackPageContainer>
             {/* 헤더 */}
@@ -189,8 +205,8 @@ export default function FeedbackPage() {
                     {loading ? '결과를 불러오는 중...' : error ? error : `"${comment}"`}
                 </SpeechBubble>
 
-                <CharacterImg src={char} alt="character" />
-                <CharacterLabel>{challengeName ?? '디폴트 캐릭터'}</CharacterLabel>
+                <CharacterImg src={charImg} alt="character" />
+                <CharacterLabel>{challengeName ?? ''}</CharacterLabel>
             </CharacterSection>
 
             {/* 분석 탭 버튼 */}

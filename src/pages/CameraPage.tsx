@@ -450,6 +450,9 @@ const CameraPage = () => {
   const durationRef = useRef<number>(20);
 
   const countdownTimerRef = useRef<number | null>(null);
+  // 라이브 촬영 포즈 프레임 수집 (10fps 샘플링)
+  const poseFramesRef = useRef<PoseFrame[]>([]);
+  const lastSampleTimeRef = useRef<number>(0);
   // 업로드 영상 분석용
   const fileInputRef = useRef<HTMLInputElement>(null);
   // FilesetResolver 결과 캐시 (업로드 분석 시 재사용)
@@ -465,6 +468,8 @@ const CameraPage = () => {
   const [poseReady, setPoseReady] = useState<boolean>(false);
   // 업로드 영상 포즈 분석/전송 진행 중 여부
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  // 라이브 촬영 결과 전송 중 여부
+  const [isSending, setIsSending] = useState<boolean>(false);
 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [showBodyWarning, setShowBodyWarning] = useState<boolean>(false);
@@ -595,6 +600,21 @@ const CameraPage = () => {
       setShowBodyWarning(!detected);
     }
 
+    // 라이브 촬영 중 포즈 프레임 수집 (10fps 샘플링)
+    if (startTimeRef.current !== null && result.landmarks.length > 0) {
+      const elapsed = (performance.now() - startTimeRef.current) / 1000;
+      if (elapsed - lastSampleTimeRef.current >= 1 / ANALYZE_FPS) {
+        lastSampleTimeRef.current = elapsed;
+        const l = result.landmarks[0].map((p) => ({
+          x: round4(p.x),
+          y: round4(p.y),
+          z: round4(p.z),
+          v: round3((p as { visibility?: number }).visibility ?? 0),
+        }));
+        poseFramesRef.current.push({ t: round3(elapsed), l });
+      }
+    }
+
     for (const landmarks of result.landmarks) {
       drawingUtils.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
         color: "#00FF88",
@@ -662,6 +682,8 @@ const CameraPage = () => {
 
     setIsPlaying(true);
     setProgress(0);
+    poseFramesRef.current = [];
+    lastSampleTimeRef.current = 0;
     startTimeRef.current = performance.now();
 
     if (!audioRef.current) audioRef.current = new Audio();
@@ -712,9 +734,43 @@ const CameraPage = () => {
     setShowBodyWarning(false);
   };
 
-  // ✅ 영상보기 — 경로 직접 설정
-  const handleViewVideo = () => {
-    navigate("/feedback");
+  // 라이브 촬영 완료 후 포즈 데이터를 백엔드로 전송하고 피드백 페이지로 이동합니다.
+  const handleViewVideo = async () => {
+    if (!selectedTrack) {
+      alert("곡 정보가 없습니다. 다시 촬영해주세요.");
+      return;
+    }
+    if (poseFramesRef.current.length < 2) {
+      alert("동작 데이터가 부족합니다. 다시 촬영해주세요.");
+      return;
+    }
+
+    const userId = useAuthStore.getState().user?.userId;
+    if (!userId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const res = await api.post(`practice/${selectedTrack.id}/evaluate`, {
+        userId,
+        user_pose_data: poseFramesRef.current,
+      });
+      const data = res.data?.data ?? res.data;
+      const userChallengeId = data?.userChallengeId;
+
+      if (userChallengeId != null) {
+        navigate(`/feedback/${userChallengeId}`);
+      } else {
+        navigate("/feedback");
+      }
+    } catch (err) {
+      console.error("라이브 촬영 결과 전송 실패", err);
+      alert(getApiErrorMessage(err, "결과 전송에 실패했습니다."));
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // ─── 미리 촬영된 영상 불러오기 ────────────────────────────────
@@ -822,7 +878,7 @@ const CameraPage = () => {
       }
 
       // 3) JSON 만 백엔드로 전송 (영상 파일은 전송하지 않음)
-      const res = await api.post(`/practice/${selectedTrack.id}/evaluate`, {
+      const res = await api.post(`practice/${selectedTrack.id}/evaluate`, {
         userId,
         user_pose_data: poseData,
       });
@@ -902,8 +958,10 @@ const CameraPage = () => {
         <CompleteOverlay>
           <CompleteTitle>완료!</CompleteTitle>
           <CompleteButtonRow>
-            <RetakeButton onClick={handleRetake}>다시 촬영하기</RetakeButton>
-            <ViewButton onClick={handleViewVideo}>영상보기</ViewButton>
+            <RetakeButton onClick={handleRetake} disabled={isSending}>다시 촬영하기</RetakeButton>
+            <ViewButton onClick={handleViewVideo} disabled={isSending}>
+              {isSending ? "전송 중..." : "결과 보기"}
+            </ViewButton>
           </CompleteButtonRow>
         </CompleteOverlay>
       )}
