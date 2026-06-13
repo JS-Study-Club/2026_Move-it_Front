@@ -6,12 +6,14 @@ import RecentDanceSection from "../components/RecentDanceSection";
 
 import { MainPageContainer } from "./MainPage.styles";
 import { api } from "../api/axios";
+import { logout } from "../api/auth";
 import type { ApiResponse, PracticeResult } from "../types";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import { toVideoData } from "../utils/videoMapper";
 import type { VideoData } from "../types.ui";
 import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
 
 // 연습 결과(UserChallenge) → 카드(VideoData) 매핑. id는 userChallengeId 입니다.
 const toVideoFromPractice = (r: PracticeResult): VideoData => ({
@@ -33,11 +35,17 @@ export default function MyPage() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState<any | null>(null);
 
+  // 로그아웃: 서버 세션(refresh 토큰/쿠키) 무효화 + 로컬 상태 초기화 후 로그인 화면으로 이동
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         // 1) 프로필 + 기본 최근 연습 목록
-        const response = await api.get<ApiResponse<any>>("/pages/my");
+        const response = await api.get<ApiResponse<any>>("pages/my");
         if (response.status === 200) {
           const user = response.data.data.user;
           setUserData(user);
@@ -45,7 +53,6 @@ export default function MyPage() {
           // 폴백: /pages/my 의 recentPracticeDance (클릭 불가)
           const fallbackVideos =
             response.data.data.recentPracticeDance?.map(toVideoData);
-          console.log("마이페이지 최근 연습 목록(폴백)", fallbackVideos);
           setRecentDanceChallenge(fallbackVideos ?? null);
 
           // 2) 외부 user_id 가 있으면 연습 결과 목록으로 교체(클릭 가능)
@@ -53,7 +60,7 @@ export default function MyPage() {
           if (userId) {
             try {
               const practiceRes = await api.get<ApiResponse<PracticeResult[]>>(
-                `/practice/results/user/${userId}`
+                `practice/results/user/${userId}`
               );
               const results = practiceRes.data.data ?? [];
               setRecentDanceChallenge(results.map(toVideoFromPractice));
@@ -93,7 +100,28 @@ export default function MyPage() {
           }
         />
       )}
+
+      <LogoutButton onClick={handleLogout}>로그아웃</LogoutButton>
+
       <Nav />
     </MainPageContainer>
   );
 }
+
+const LogoutButton = styled.button`
+  display: block;
+  margin: 24px auto 0;
+  padding: 8px 20px;
+  background: transparent;
+  border: 1px solid #9a9a9a;
+  border-radius: 20px;
+  color: #4b4b4b;
+  font-family: "Galmuri11", sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:active {
+    background: rgba(0, 0, 0, 0.05);
+  }
+`;

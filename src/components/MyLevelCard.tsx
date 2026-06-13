@@ -1,5 +1,5 @@
 // 메인페이지에 들어가는 레벨 카드 컴포넌트
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ProfileSection,
   CharacterContainer,
@@ -64,13 +64,27 @@ interface Props {
 
 export default function MyLevelCard({ user }: Props) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
     (location.state as LocationState) ?? {};
 
+  // 서버에 저장된 teacher 값(teacher_character_id / teacherId)을 최우선으로 사용합니다.
+  // 그래야 캐릭터 변경이 즉시 반영되고 새로고침/재로그인 후에도 유지됩니다.
+  const serverTeacherId: number | undefined =
+    user?.teacherId ?? user?.teacher_character_id;
+  const serverTeacherImage = serverTeacherId
+    ? teacherImages[serverTeacherId]
+    : undefined;
+
   const teacher = stateTeacher ?? getSavedTeacher();
-  const teacherImage = stateTeacherImage ?? getSavedTeacherImage();
+  const teacherImage =
+    serverTeacherImage ?? stateTeacherImage ?? getSavedTeacherImage();
   const charImg = teacherImage ?? defaultChar;
+
+  const handlePracticeClick = () => {
+    navigate("/camera");
+  };
 
   return (
     <ProfileSection>
@@ -81,13 +95,14 @@ export default function MyLevelCard({ user }: Props) {
       <LevelCardWrapper>
         <LevelCardInner>
           <LevelInfoArea>
-            <LevelText>{`LV.${user.level} ${user.levelInfo.levelTitle}`}</LevelText>
+            {/* LV. + 레벨번호(1~) + 칭호 */}
+            <LevelText>{`LV. ${user.level ?? 1} ${user.levelTitle ?? ""}`}</LevelText>
 
             <ProgressTrack>
-              <ProgressFill $progress={user.levelXp} />
+              <ProgressFill $progress={user.levelProgress ?? 0} />
             </ProgressTrack>
           </LevelInfoArea>
-          <PracticeBtn>연습</PracticeBtn>
+          <PracticeBtn onClick={handlePracticeClick}>연습</PracticeBtn>
         </LevelCardInner>
       </LevelCardWrapper>
     </ProfileSection>

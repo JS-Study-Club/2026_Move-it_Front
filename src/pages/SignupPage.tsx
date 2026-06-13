@@ -5,8 +5,6 @@ import StartButton from "../components/StartButton";
 import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { api } from "../api/axios";
-import { getApiErrorMessage } from "../utils/apiError";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -22,29 +20,24 @@ export default function SignupPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSignup = async (e?: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = (e?: React.FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     if (!form.name || !form.email || !form.id || !form.password) {
       alert("모든 항목을 입력해주세요.");
       return;
     }
-    try {
-      // 성공 시 서버는 204 No Content 를 반환합니다.
-      // axios 는 2xx 면 resolve 하므로, 여기까지 왔으면 성공입니다.
-      await api.post("auth/signup", {
-        userId: form.id,
-        username: form.name,
-        email: form.email,
-        password: form.password,
-        teacherId: 1,
-      });
-
-      alert("회원가입 완료!");
-      navigate("/login");
-    } catch (error) {
-      console.error("회원가입 에러: ", error);
-      alert(getApiErrorMessage(error, "회원가입에 실패했습니다."));
-    }
+    // 회원가입은 캐릭터 선택까지 끝나야 완료됩니다.
+    // 입력한 정보를 들고 캐릭터 선택 화면으로 이동하고, 거기서 가입을 마무리합니다.
+    navigate("/select", {
+      state: {
+        signup: {
+          userId: form.id,
+          username: form.name,
+          email: form.email,
+          password: form.password,
+        },
+      },
+    });
   };
 
   return (

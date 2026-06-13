@@ -4,6 +4,8 @@ export interface VideoData {
   date: string;
   score: number;
   thumbnail: string;
+  // 피드백 상세(/feedback/:userChallengeId) 진입에 필요한 연습 결과 식별자
+  userChallengeId?: number | null;
 }
 
 export interface ChallengeData {
