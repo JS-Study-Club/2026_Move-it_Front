@@ -35,6 +35,7 @@ export interface ChallengeDataRes {
   releaseDate: string;
   viewCount: number;
   description: string;
+  length?: number;
 }
 
 export interface PageHomeResponse {
