@@ -27,16 +27,11 @@ export default function LoginPage() {
 
       if (response.status === 200) {
         // accessToken 은 httpOnly 쿠키로 내려오므로 응답 body 에는 없습니다.
-        console.log("✅ 로그인 성공", response);
+        console.log("✅ 로그인 성공");
         alert("로그인에 성공했습니다");
-
         setUser(response.data.data.user);
 
-        // 디버그: 개발자 도구에서 쿠키 확인 후 이동 (2초 대기)
-        console.log("📍 쿠키 확인 후 main으로 이동합니다. Network 탭을 확인하세요.");
-        setTimeout(() => {
-          navigate("/main");
-        }, 2000);
+        navigate("/main");
       }
     } catch (error) {
       console.error("로그인 에러: ", error);
