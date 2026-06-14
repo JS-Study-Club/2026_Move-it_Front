@@ -99,6 +99,21 @@ const Container = styled.div`
   background: #000;
   position: relative;
   overflow: hidden;
+  /* 9:16 무대를 화면 중앙에 배치하고, 남는 영역은 검은 레터박스로 채운다. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+// 카메라 화면을 항상 720x1280(9:16) 비율로 고정한다.
+// 뷰포트가 9:16 이 아니어도 비율을 유지한 채 화면에 맞춰 축소되며,
+// 모든 UI(카메라/버튼/오버레이/시트)가 이 무대 안에 올라간다.
+const Stage = styled.div`
+  position: relative;
+  width: min(100vw, calc(100dvh * 720 / 1280));
+  height: min(100dvh, calc(100vw * 1280 / 720));
+  overflow: hidden;
+  background: #000;
 `;
 
 const CameraWrapper = styled.div`
@@ -1162,10 +1177,13 @@ const CameraPage = () => {
 
   return (
     <Container>
-      <CameraWrapper>
-        <StyledVideo ref={videoRef} autoPlay playsInline muted />
-        <StyledCanvas ref={canvasRef} />
-      </CameraWrapper>
+      {/* 카메라(영상+스켈레톤)만 9:16 비율 무대 안에 둔다. 메뉴/버튼은 전체 화면 사용 */}
+      <Stage>
+        <CameraWrapper>
+          <StyledVideo ref={videoRef} autoPlay playsInline muted />
+          <StyledCanvas ref={canvasRef} />
+        </CameraWrapper>
+      </Stage>
 
       {/* 좌상단 뒤로가기 */}
       <BackButton onClick={() => navigate(-1)} aria-label="뒤로가기">
