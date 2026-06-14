@@ -42,7 +42,7 @@ export const CardTitle = styled.h3`
   font-weight: 400;
   line-height: 22px; /* 275% */
   margin-bottom: 60px;
-  -webkit-text-stroke: 0.5px #949494;
+  -webkit-text-stroke: 1px #747474;
   paint-order: stroke fill;
 
   /* 말줄임표 처리 */
@@ -59,8 +59,7 @@ export const CardInfo = styled.div`
   text-align: center;
   font-weight: 400;
   line-height: 22px; /* 275% */
-  
-  -webkit-text-stroke: 0.5px #949494;
+  -webkit-text-stroke: 1px #747474;
   paint-order: stroke fill;
 `;
 
