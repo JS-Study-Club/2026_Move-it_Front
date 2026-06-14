@@ -58,10 +58,11 @@ const POSE_MODEL_URL =
   "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
 
 // 업로드 영상 제약 / 분석 설정
-const MAX_VIDEO_DURATION = 21; // 초 — 이 값 이상이면 업로드 불가
+// 업로드 허용 길이 = 선택한 챌린지 길이 + 이 버퍼(초). 챌린지보다 살짝 긴 영상까지 허용.
+const UPLOAD_BUFFER_SECONDS = 3;
 const ANALYZE_FPS = 10; // 백엔드 추출 FPS와 동일하게 맞춤
 // 라이브 포즈 감지 주기(가장 무거운 작업). 매 프레임(보통 60fps) 대신 이 빈도로만 감지한다.
-const DETECT_FPS = 30;
+const DETECT_FPS = 20;
 // 노래 페이드 인/아웃 길이(초)
 const FADE_DURATION = 1;
 
@@ -763,7 +764,9 @@ const CameraPage = () => {
       return;
     }
 
-    // 1) 영상 길이 검증 (20초 이상 불가)
+    // 1) 영상 길이 검증 (선택한 챌린지 길이 + 버퍼 까지만 허용)
+    const maxAllowed =
+      (selectedTrack.duration ?? DEFAULT_DURATION) + UPLOAD_BUFFER_SECONDS;
     let duration = 0;
     try {
       duration = await getVideoDuration(file);
@@ -771,8 +774,8 @@ const CameraPage = () => {
       alert("영상을 불러올 수 없습니다.");
       return;
     }
-    if (!Number.isFinite(duration) || duration >= MAX_VIDEO_DURATION) {
-      alert(`${MAX_VIDEO_DURATION}초 미만의 영상만 업로드할 수 있습니다.`);
+    if (!Number.isFinite(duration) || duration > maxAllowed) {
+      alert(`${Math.round(maxAllowed)}초 이하의 영상만 업로드할 수 있습니다.`);
       return;
     }
 
@@ -919,7 +922,9 @@ const CameraPage = () => {
               )}
 
               <UploadButton onClick={handleLoadVideoClick} disabled={isAnalyzing}>
-                <MusicLabel>🎬 영상 불러오기 (20초 미만)</MusicLabel>
+                <MusicLabel>
+                  🎬 영상 불러오기 ({Math.round(highlightDuration + UPLOAD_BUFFER_SECONDS)}초 이하)
+                </MusicLabel>
               </UploadButton>
 
               <ShutterOuter onClick={handleStartCountdown}>
