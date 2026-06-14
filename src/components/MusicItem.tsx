@@ -10,6 +10,7 @@ export interface SelectedTrack {
   startTime: number; // 하이라이트 시작 (초)
   endTime: number; // 하이라이트 끝 (초)
   length: number; // 전체 길이 (초)
+  duration: number; // 촬영(녹화) 길이 (초) — 미설정 시 20
 }
 
 interface MusicItemProps {
@@ -100,8 +101,8 @@ const MusicItem = ({ track, isSelected, onSelect }: MusicItemProps) => {
     return `${mins}:${secs}`;
   };
 
-  // 하이라이트 구간 길이를 표시합니다.
-  const highlightLength = track.endTime - track.startTime;
+  // 촬영(녹화) 길이를 표시합니다. (미설정 시 20초)
+  const highlightLength = track.duration;
 
   return (
     <ItemContainer onClick={() => onSelect(track)}>

@@ -63,7 +63,11 @@ export default function MyPage() {
                 `practice/results/user/${userId}`
               );
               const results = practiceRes.data.data ?? [];
-              setRecentDanceChallenge(results.map(toVideoFromPractice));
+              // 가장 최근에 연습한 기록이 앞에 오도록 createdAt 내림차순 정렬
+              const sortedByRecent = [...results].sort((a, b) =>
+                (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+              );
+              setRecentDanceChallenge(sortedByRecent.map(toVideoFromPractice));
               setClickable(true);
             } catch (practiceError) {
               // 연습 결과 조회 실패 시 폴백 목록을 그대로 유지
@@ -93,6 +97,7 @@ export default function MyPage() {
         <RecentDanceSection
           title={"최근 연습한 춤"}
           videos={recentDanceChallenge ?? []}
+          sortBy="recent"
           onCardClick={
             clickable
               ? (video) => navigate(`/feedback/${video.id}`)
