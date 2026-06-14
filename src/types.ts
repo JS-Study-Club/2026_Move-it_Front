@@ -62,6 +62,8 @@ export interface ChallengeSearchResult {
   view_count: number;
   start_time: number;
   end_time: number | null;
+  // 촬영(녹화) 길이(초). 백엔드가 미설정 시 20을 기본으로 내려줍니다.
+  duration: number;
   score: number;
   createdAt: string;
   updatedAt: string;

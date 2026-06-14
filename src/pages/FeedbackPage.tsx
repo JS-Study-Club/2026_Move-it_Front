@@ -113,6 +113,9 @@ const CATEGORY_FEEDBACK: Record<PracticeCategory, CategoryFeedback> = {
 // 90점 이상이면 아쉬운 점 카드를 숨깁니다.
 const HIDE_IMPROVE_SCORE = 90;
 
+// 50점 미만이면 잘한 점 카드를 숨깁니다.
+const SHOW_GOOD_MIN_SCORE = 50;
+
 // userChallengeId 없이 진입했을 때(데모) 사용하는 기본 코멘트/점수
 const DEMO_COMMENT = '잘하고 있는데 기본기가 조금 더 필요한 것 같아.';
 const DEMO_SCORE = 80;
@@ -175,9 +178,12 @@ export default function FeedbackPage() {
 
     const challengeName = result?.challenge?.name;
 
-    // 카테고리별 잘한 점(3개)은 항상, 아쉬운 점(3개)은 90점 이상이면 숨김
+    // 잘한 점(3개)은 50점 미만이면 숨김, 아쉬운 점(3개)은 90점 이상이면 숨김
     const content = CATEGORY_FEEDBACK[tab];
-    const good = { ...content.good, iconBg: '#DAF0FF' };
+    const good =
+        (categoryScore ?? 0) < SHOW_GOOD_MIN_SCORE
+            ? null
+            : { ...content.good, iconBg: '#DAF0FF' };
     const improve =
         (categoryScore ?? 0) >= HIDE_IMPROVE_SCORE
             ? null

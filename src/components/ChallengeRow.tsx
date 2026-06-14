@@ -20,17 +20,10 @@ interface Props {
 const ChallengeRow: React.FC<Props> = ({ challenge, rank }) => {
   const navigate = useNavigate();
 
-  // 곡 선택 시 연습(카메라) 페이지로 이동하면서 선택한 챌린지 정보를 전달합니다.
+  // 곡 선택 시 카메라 페이지로 이동하면서 challengeId 를 쿼리 파라미터로 전달합니다.
+  // → CameraPage 가 이 값으로 챌린지를 조회해 자동 선택합니다. (다시 고를 필요 없음)
   const handleSelect = () => {
-    navigate("/camera", {
-      state: {
-        challengeId: challenge.id,
-        name: challenge.name,
-        artist: challenge.artist,
-        musicUrl: challenge.music_url,
-        thumbnailUrl: challenge.music_image_url,
-      },
-    });
+    navigate(`/camera?challengeId=${challenge.id}`);
   };
 
   return (

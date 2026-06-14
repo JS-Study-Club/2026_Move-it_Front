@@ -16,7 +16,7 @@ interface MusicSelectSheetProps {
 }
 
 // 백엔드 챌린지 → 카메라 재생용 SelectedTrack 변환
-const toSelectedTrack = (c: ChallengeSearchResult): SelectedTrack => {
+export const toSelectedTrack = (c: ChallengeSearchResult): SelectedTrack => {
   const startTime = c.start_time ?? 0;
   // end_time 이 없으면 전체 길이로 대체합니다.
   const endTime =
@@ -30,6 +30,8 @@ const toSelectedTrack = (c: ChallengeSearchResult): SelectedTrack => {
     startTime,
     endTime,
     length: c.length ?? 0,
+    // 촬영(녹화) 길이(초). 백엔드 미설정 시 20초 기본.
+    duration: c.duration ?? 20,
   };
 };
 
