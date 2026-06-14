@@ -1,5 +1,4 @@
 import { useRef, useEffect, useState } from "react";
-import styled from "styled-components";
 import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import MusicSelectSheet, { toSelectedTrack } from "../components/MusicSelectSheet";
@@ -10,6 +9,47 @@ import leftArrow from "../img/leftArrow.svg";
 import { api } from "../api/axios";
 import { useAuthStore } from "../store/authStore";
 import { getApiErrorMessage } from "../utils/apiError";
+import {
+  Container,
+  Stage,
+  CameraWrapper,
+  StyledVideo,
+  StyledCanvas,
+  ButtonContainer,
+  MusicButton,
+  UploadButton,
+  HiddenFileInput,
+  MusicCover,
+  MusicLabel,
+  ShutterOuter,
+  ShutterInner,
+  BackButton,
+  BackIcon,
+  VolumeRow,
+  VolumeSlider,
+  PlaybackStatusBox,
+  InfoRow,
+  MusicInfoText,
+  DurationText,
+  TimelineContainer,
+  ProgressTrack,
+  ProgressFill,
+  TimelineDot,
+  LoadingOverlay,
+  AnalyzingOverlay,
+  AnalyzingText,
+  CountdownOverlay,
+  CountdownNumber,
+  WarningDimOverlay,
+  WarningOverlay,
+  WarningIcon,
+  WarningText,
+  CompleteOverlay,
+  CompleteTitle,
+  CompleteButtonRow,
+  RetakeButton,
+  ViewButton,
+} from "./CameraPage.styles";
 
 // ─── MediaPipe 리소스 경로 (라이브/업로드 분석 공통) ───────────
 const POSE_WASM_URL =
@@ -91,431 +131,6 @@ const seekTo = (video: HTMLVideoElement, time: number): Promise<void> =>
     setTimeout(finish, 300);
     video.currentTime = time;
   });
-
-// ─── Styled Components ────────────────────────────────────────
-const Container = styled.div`
-  width: 100%;
-  height: 100dvh;
-  background: #000;
-  position: relative;
-  overflow: hidden;
-  /* 9:16 무대를 화면 중앙에 배치하고, 남는 영역은 검은 레터박스로 채운다. */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-// 카메라 화면을 항상 720x1280(9:16) 비율로 고정한다.
-// 뷰포트가 9:16 이 아니어도 비율을 유지한 채 화면에 맞춰 축소되며,
-// 모든 UI(카메라/버튼/오버레이/시트)가 이 무대 안에 올라간다.
-const Stage = styled.div`
-  position: relative;
-  width: min(100vw, calc(100dvh * 720 / 1280));
-  height: min(100dvh, calc(100vw * 1280 / 720));
-  overflow: hidden;
-  background: #000;
-`;
-
-const CameraWrapper = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-`;
-
-const StyledVideo = styled.video`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-`;
-
-const StyledCanvas = styled.canvas`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  /* 영상과 동일하게 cover 로 잘려 표시돼야 스켈레톤이 몸에 정확히 겹친다. */
-  object-fit: cover;
-  transform: scaleX(-1);
-  z-index: 2;
-  pointer-events: none;
-`;
-
-const ButtonContainer = styled.div`
-  position: absolute;
-  bottom: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  width: calc(100% - 48px);
-  max-width: 400px;
-`;
-
-const MusicButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 8px 16px;
-  cursor: pointer;
-
-  &:active {
-    background: rgba(0, 0, 0, 0.65);
-  }
-`;
-
-// "영상 불러오기" 버튼 — MusicButton 과 동일한 룩앤필
-const UploadButton = styled(MusicButton)`
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-const MusicCover = styled.img`
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  object-fit: cover;
-`;
-
-const MusicLabel = styled.span`
-  font-family: "Galmuri11", sans-serif;
-  font-size: 12px;
-  color: #fff;
-  max-width: 160px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const ShutterOuter = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 97px;
-  height: 97px;
-  padding: 20px;
-  border-radius: 50%;
-  background: rgba(32, 133, 204, 0.28);
-  border: none;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-
-  &:active {
-    transform: scale(0.95);
-  }
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const ShutterInner = styled.div`
-  width: 57px;
-  height: 57px;
-  background: #2085cc;
-  border-radius: 50%;
-`;
-
-// 좌상단 뒤로가기 버튼
-const BackButton = styled.button`
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 30;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  cursor: pointer;
-
-  &:active {
-    background: rgba(0, 0, 0, 0.65);
-  }
-`;
-
-const BackIcon = styled.img`
-  width: 22px;
-  height: 22px;
-  /* 아이콘 원본이 검은색이라, 어두운 카메라 위에서 보이도록 흰색으로 반전 */
-  filter: invert(1);
-`;
-
-// 음악 볼륨 조절 행 (MusicButton 과 동일한 룩앤필)
-const VolumeRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  box-sizing: border-box;
-
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  padding: 8px 16px;
-`;
-
-const VolumeSlider = styled.input`
-  flex: 1;
-  height: 4px;
-  accent-color: #2085cc;
-  cursor: pointer;
-`;
-
-const PlaybackStatusBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 14px;
-  padding: 16px 20px;
-  box-sizing: border-box;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  font-family: "Galmuri11", sans-serif;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
-
-const MusicInfoText = styled.span`
-  font-size: 14px;
-  color: #111111;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
-`;
-
-const DurationText = styled.span`
-  font-size: 14px;
-  color: #333333;
-`;
-
-const TimelineContainer = styled.div`
-  position: relative;
-  width: 100%;
-  height: 12px;
-  display: flex;
-  align-items: center;
-`;
-
-const ProgressTrack = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 3px;
-  background: #b6d3eb;
-  border-radius: 2px;
-`;
-
-const ProgressFill = styled.div<{ $percent: number }>`
-  position: absolute;
-  left: 0;
-  width: ${({ $percent }) => $percent}%;
-  height: 3px;
-  background: #2085cc;
-  border-radius: 2px;
-  z-index: 2;
-`;
-
-const TimelineDot = styled.div<{ $active: boolean; $leftPercent: number }>`
-  position: absolute;
-  left: ${({ $leftPercent }) => $leftPercent}%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: ${({ $active }) => ($active ? "#2085cc" : "#b6d3eb")};
-  z-index: 3;
-`;
-
-const LoadingOverlay = styled.div`
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 12px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  pointer-events: none;
-`;
-
-// 업로드 영상 분석 중 전체 화면 오버레이
-const AnalyzingOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 25;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.55);
-`;
-
-const AnalyzingText = styled.span`
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 16px;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-`;
-
-const CountdownOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 15;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-`;
-
-const CountdownNumber = styled.span`
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 120px;
-  font-weight: 400;
-  line-height: 1;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
-  animation: countPop 1s ease-out forwards;
-
-  @keyframes countPop {
-    0%   { transform: scale(1.4); opacity: 0; }
-    20%  { transform: scale(1);   opacity: 1; }
-    80%  { transform: scale(1);   opacity: 1; }
-    100% { transform: scale(0.8); opacity: 0; }
-  }
-`;
-
-// ✅ 경고 시 화면 어둡게
-const WarningDimOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 13;
-  background: rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-`;
-
-const WarningOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 14;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  pointer-events: none;
-`;
-
-const WarningIcon = styled.img`
-  width: 40px;
-  height: 40px;
-`;
-
-const WarningText = styled.p`
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 22px;
-  text-align: center;
-  margin: 0;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
-`;
-
-// ✅ 완료 오버레이
-const CompleteOverlay = styled.div`
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-`;
-
-const CompleteTitle = styled.span`
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 32px;
-  font-weight: 400;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-`;
-
-const CompleteButtonRow = styled.div`
-  display: flex;
-  gap: 12px;
-  align-items: center;
-`;
-
-const RetakeButton = styled.button`
-  display: flex;
-  width: 151px;
-  padding: 10px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 10px;
-  background: rgba(126, 126, 126, 0.86);
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 14px;
-
-  &:active { opacity: 0.8; }
-`;
-
-const ViewButton = styled.button`
-  display: flex;
-  width: 151px;
-  padding: 10px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  border-radius: 10px;
-  background: rgba(16, 106, 169, 0.86);
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  font-family: "Galmuri11", sans-serif;
-  font-size: 14px;
-
-  &:active { opacity: 0.8; }
-`;
 
 // ─── 전신 인식 판정 헬퍼 ──────────────────────────────────────
 const REQUIRED_LANDMARKS = [
@@ -600,11 +215,12 @@ const CameraPage = () => {
   // ─── 카메라 시작 ───────────────────────────────────────────
   useEffect(() => {
     const startCamera = async () => {
-      // 화질 일관성을 위해 720x1280(세로) 해상도로 고정 요청한다.
+      // 9:16 해상도를 강제하면 센서(보통 4:3)를 9:16 으로 맞추느라 화면을 잘라
+      // 확대(디지털 줌)된다. 화각을 그대로 쓰기 위해 종횡비/높이는 지정하지 않고
+      // 화질을 위해 width 만 힌트로 준다(브라우저가 네이티브 비율로 해상도를 고른다).
       const baseVideo: MediaTrackConstraints = {
         facingMode: "user",
-        width: { ideal: 720 },
-        height: { ideal: 1280 },
+        width: { ideal: 1280 },
       };
       try {
         let stream: MediaStream;
@@ -848,10 +464,13 @@ const CameraPage = () => {
 
   // ─── 셔터 버튼 및 카운트다운 로직 ─────────────────────────────
   const handleStartCountdown = () => {
-    if (!selectedTrack || countdown !== null || countdownTimerRef.current !== null) {
+    // 곡이 선택되지 않은 상태에서 촬영을 시작하려 하면 곡 선택을 안내한다.
+    if (!selectedTrack) {
       alert("음악을 선택해주세요!");
       return;
     }
+    // 이미 카운트다운 중이면 중복 시작을 막는다.
+    if (countdown !== null || countdownTimerRef.current !== null) return;
 
     // 모바일(특히 iOS Safari) 자동재생 정책 우회:
     // 실제 재생(startPlayback)은 카운트다운이 끝난 setInterval 콜백, 즉 사용자 제스처
@@ -890,7 +509,7 @@ const CameraPage = () => {
 
     setCountdown(3);
     let currentCount = 3;
-    
+
 
     countdownTimerRef.current = window.setInterval(() => {
       currentCount -= 1;
@@ -1279,7 +898,7 @@ const CameraPage = () => {
                 <MusicLabel>🎬 영상 불러오기 (20초 미만)</MusicLabel>
               </UploadButton>
 
-              <ShutterOuter onClick={handleStartCountdown} disabled={!selectedTrack}>
+              <ShutterOuter onClick={handleStartCountdown}>
                 <ShutterInner />
               </ShutterOuter>
             </>
