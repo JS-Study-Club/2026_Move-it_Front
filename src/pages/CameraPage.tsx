@@ -214,14 +214,36 @@ const CameraPage = () => {
 
   // ─── 카메라 시작 ───────────────────────────────────────────
   useEffect(() => {
+    // 전면 카메라가 좁은(크롭된) 화각으로 잡히는 경우, 트랙에 zoom 능력이 있으면
+    // 최솟값으로 낮춰 화각을 최대한 넓힌다. (지원 안 하면 조용히 무시)
+    const applyWidestFov = async (stream: MediaStream) => {
+      try {
+        const track = stream.getVideoTracks()[0];
+        if (!track?.getCapabilities) return;
+        const caps = track.getCapabilities() as unknown as {
+          zoom?: { min: number; max: number };
+        };
+        if (caps.zoom && typeof caps.zoom.min === "number") {
+          await track.applyConstraints({
+            advanced: [{ zoom: caps.zoom.min } as unknown as MediaTrackConstraintSet],
+          });
+        }
+      } catch (e) {
+        console.warn("화각(zoom) 조정 실패(미지원일 수 있음):", e);
+      }
+    };
+
     const startCamera = async () => {
       // 9:16 해상도를 강제하면 센서(보통 4:3)를 9:16 으로 맞추느라 화면을 잘라
       // 확대(디지털 줌)된다. 화각을 그대로 쓰기 위해 종횡비/높이는 지정하지 않고
-      // 화질을 위해 width 만 힌트로 준다(브라우저가 네이티브 비율로 해상도를 고른다).
+      // 화질을 위해 width 만 힌트로 준다. resizeMode: none 으로 브라우저의 임의
+      // 크롭/스케일을 피해 화각을 최대한 보존한다.
       const baseVideo: MediaTrackConstraints = {
         facingMode: "user",
         width: { ideal: 1280 },
       };
+      // resizeMode 는 일부 TS DOM 타입에 없어 캐스팅으로 추가한다.
+      (baseVideo as Record<string, unknown>).resizeMode = { ideal: "none" };
       try {
         let stream: MediaStream;
         try {
@@ -230,7 +252,7 @@ const CameraPage = () => {
             audio: false,
           });
         } catch {
-          // 해당 해상도를 지원하지 않는 기기 → 제약 없이 재시도
+          // 해당 제약을 지원하지 않는 기기 → 제약 없이 재시도
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "user" },
             audio: false,
@@ -240,6 +262,8 @@ const CameraPage = () => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
+        // 스트림 확보 후 화각을 최대한 넓힌다.
+        await applyWidestFov(stream);
       } catch (err) {
         console.error("카메라를 시작할 수 없습니다:", err);
       }
