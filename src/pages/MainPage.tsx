@@ -76,7 +76,7 @@ export default function MainPage() {
       {/* 3. 최근 영상 컴포넌트 호출 */}
       {highScoreChallengeVideo && (
         <RecentDanceSection
-          title="높은 점수를 받은 댄스 영상"
+          title="높은 점수를 받은 댄스 챌린지"
           videos={highScoreChallengeVideo}
           onCardClick={(video) => {
             if (video.userChallengeId != null) {
