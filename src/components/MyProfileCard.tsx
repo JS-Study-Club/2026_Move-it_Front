@@ -1,6 +1,6 @@
 // 마이페이지에 들어가는 프로필, 레벨 카드 컴포넌트
-import { useLocation } from "react-router-dom";
 import styled from "styled-components";
+import teachersData from "../data/teachersData.json";
 // 이미지 임포트
 import defaultChar from "../img/tyt.png";
 import tyt from "../img/tyt.png";
@@ -23,28 +23,7 @@ interface Teacher {
   comment: string;
 }
 
-interface LocationState {
-  teacher?: Teacher;
-  teacherImage?: string;
-}
-
-const getSavedTeacher = (): Teacher | undefined => {
-  try {
-    const saved = localStorage.getItem("selectedTeacher");
-    return saved ? JSON.parse(saved) : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
-const getSavedTeacherImage = (): string | undefined => {
-  try {
-    const savedId = localStorage.getItem("selectedTeacherImageId");
-    return savedId ? teacherImages[Number(savedId)] : undefined;
-  } catch {
-    return undefined;
-  }
-};
+const teachers = teachersData as Teacher[];
 
 /* ── 마이페이지 전용 스타일 ── */
 const ProfileCard = styled.div`
@@ -119,22 +98,11 @@ interface Props {
 
 /* ── 컴포넌트 ── */
 export default function MyProfileCard({ userInfo }: Props) {
-  const location = useLocation();
-
-  const { teacher: stateTeacher, teacherImage: stateTeacherImage } =
-    (location.state as LocationState) ?? {};
-
-  // 서버에 저장된 teacher 값을 최우선으로 사용합니다(변경 즉시 반영 + 유지).
-  const serverTeacherId: number | undefined =
+  // 캐릭터는 서버(API)가 내려준 teacherId 로만 결정합니다. (localStorage 사용 안 함)
+  const teacherId: number | undefined =
     userInfo?.teacherId ?? userInfo?.teacher_character_id;
-  const serverTeacherImage = serverTeacherId
-    ? teacherImages[serverTeacherId]
-    : undefined;
-
-  const teacher = stateTeacher ?? getSavedTeacher();
-  const teacherImage =
-    serverTeacherImage ?? stateTeacherImage ?? getSavedTeacherImage();
-  const charImg = teacherImage ?? defaultChar;
+  const teacher = teachers.find((t) => t.id === teacherId);
+  const charImg = teacherImages[teacherId ?? 0] ?? defaultChar;
 
   return (
     <ProfileCard>

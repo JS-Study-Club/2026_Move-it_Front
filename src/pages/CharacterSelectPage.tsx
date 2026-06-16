@@ -82,15 +82,9 @@ export default function CharacterSelectPage() {
       await api.patch("users/me", {
         teacherId: current.id,
       });
-      // 화면 즉시 반영 + 새로고침 후에도 유지되도록 캐시도 갱신합니다.
-      localStorage.setItem("selectedTeacher", JSON.stringify(current));
-      localStorage.setItem("selectedTeacherImageId", String(current.id));
-      navigate("/main", {
-        state: {
-          teacher: current,
-          teacherImage: teacherImages[current.id],
-        },
-      });
+      // 선택한 캐릭터는 서버(teacher_character_id)에 저장됐으므로, 메인에서
+      // API(/pages/home)로 다시 받아 표시합니다. (localStorage 사용 안 함)
+      navigate("/main");
     } catch (error) {
       console.error(error);
       alert(
