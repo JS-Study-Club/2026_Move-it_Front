@@ -19,6 +19,11 @@ export default function LoginPage() {
 
   const handleLogin = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    // 빈 입력은 서버에 보내지 않고 즉시 안내한다. (서버의 영어 검증 메시지 노출 방지)
+    if (!id.trim() || !password.trim()) {
+      alert("아이디와 비밀번호를 입력해주세요.");
+      return;
+    }
     try {
       const response = await api.post("auth/login", {
         userId: id,
