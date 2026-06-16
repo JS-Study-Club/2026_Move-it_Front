@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
 import { useAuthStore } from '../store/authStore';
+import { getApiErrorMessage } from '../utils/apiError';
 import char from '../img/tyt.png';
 import tyt from '../img/tyt.png';
 import yjt from '../img/yjt.png';
@@ -150,9 +151,10 @@ export default function FeedbackPage() {
                     `practice/result/${userChallengeId}`
                 );
                 setResult(res.data.data);
-            } catch (err: any) {
+            } catch (err) {
                 console.error('연습 결과 불러오기 실패', err);
-                setError('연습 결과를 불러오지 못했습니다.');
+                // 백엔드 공통 에러 응답의 error.message 를 그대로 노출합니다.
+                setError(getApiErrorMessage(err, '연습 결과를 불러오지 못했습니다.'));
             } finally {
                 setLoading(false);
             }
