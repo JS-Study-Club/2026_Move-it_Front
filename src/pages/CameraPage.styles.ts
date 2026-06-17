@@ -107,10 +107,7 @@ export const MusicLabel = styled.span`
   font-family: "Galmuri11", sans-serif;
   font-size: 12px;
   color: #fff;
-  max-width: 160px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 `;
 
 export const ShutterOuter = styled.button`

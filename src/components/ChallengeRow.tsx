@@ -26,6 +26,20 @@ const ChallengeRow: React.FC<Props> = ({ challenge, rank }) => {
     navigate(`/camera?challengeId=${challenge.id}`);
   };
 
+  const handleShowVideo = () => {
+    console.log("영상 재생 버튼 클릭", challenge.video_url);
+    if (challenge.video_url) {
+      const urlEncoded = encodeURIComponent(challenge.video_url);
+      const titleEncoded = encodeURIComponent(challenge.name);
+      const artistEncoded = encodeURIComponent(challenge.artist);
+      navigate(`/video?videoUrl=${urlEncoded}&title=${titleEncoded}&artist=${artistEncoded}&challengeId=${challenge.id}`, {
+        state: { challenge }
+      });
+    } else {
+      alert("영상 URL이 없습니다.");
+    }
+  };
+
   return (
     <ChallengeRowContainer>
       {rank !== undefined && <RankNumber>{rank}</RankNumber>}
@@ -47,7 +61,8 @@ const ChallengeRow: React.FC<Props> = ({ challenge, rank }) => {
         <ChallengeArtist>{challenge.artist}</ChallengeArtist>
       </ChallengeInfo>
 
-      <SelectBtn onClick={handleSelect}>곡 선택하기</SelectBtn>
+      <SelectBtn onClick={handleShowVideo}>영상보기</SelectBtn>
+      <SelectBtn onClick={handleSelect}>선택</SelectBtn>
     </ChallengeRowContainer>
   );
 };
