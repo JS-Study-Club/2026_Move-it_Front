@@ -47,9 +47,13 @@ export default function FirstPage() {
 
         const user = res?.data?.data?.user ?? res?.data?.user;
         if (active && user) {
-          // 스토어도 채워두면 이후 페이지에서 유저 재조회를 줄일 수 있다.
           useAuthStore.getState().setUser(user);
-          navigate('/main', { replace: true });
+          // 캐릭터를 아직 선택하지 않은 신규 유저는 선택 화면으로 보낸다.
+          if (!user?.teacherId) {
+            navigate('/select', { replace: true });
+          } else {
+            navigate('/main', { replace: true });
+          }
         }
       } catch {
         // 로그인 이력이 없거나 세션 만료 → FirstPage 를 그대로 표시한다.

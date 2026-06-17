@@ -31,12 +31,17 @@ export default function LoginPage() {
       });
 
       if (response.status === 200) {
-        // accessToken 은 httpOnly 쿠키로 내려오므로 응답 body 에는 없습니다.
         console.log("✅ 로그인 성공");
         alert("로그인에 성공했습니다");
-        setUser(response.data.data.user);
+        const user = response.data.data.user;
+        setUser(user);
 
-        navigate("/main");
+        // 캐릭터를 아직 선택하지 않은 신규 유저는 선택 화면으로 이동한다.
+        if (!user?.teacherId) {
+          navigate("/select");
+        } else {
+          navigate("/main");
+        }
       }
     } catch (error) {
       console.error("로그인 에러: ", error);
