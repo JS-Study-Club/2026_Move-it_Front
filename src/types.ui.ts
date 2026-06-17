@@ -17,4 +17,5 @@ export interface ChallengeData {
   participants: number; // 조회수임
   uploadDate: string;
   duration: string;
+  video_url: string | null;
 }

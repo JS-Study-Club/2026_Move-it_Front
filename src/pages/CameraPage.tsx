@@ -620,10 +620,15 @@ const CameraPage = () => {
   };
 
   const handleRetake = () => {
+    // 다시 촬영하기: 선택한 곡은 그대로 유지하고 촬영 상태만 초기화한다.
+    // (이전에는 곡 선택이 풀려 매번 다시 골라야 했음)
     setIsComplete(false);
-    setSelectedTrack(null);
     setProgress(0);
     setShowBodyWarning(false);
+    showBodyWarningRef.current = false;
+    poseFramesRef.current = [];
+    startTimeRef.current = null;
+    playbackStartedRef.current = false;
   };
 
   // 인증 쿠키는 유효하지만 메모리(zustand)의 user 가 비어 userId 가 없을 수 있다.
