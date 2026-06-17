@@ -17,6 +17,7 @@ export const toChallengeData = (item: RecommendedChallenge): ChallengeData => {
     description: item.description,
     participants: item.viewCount,
     uploadDate: item.releaseDate,
+    video_url: item.video_url,
     duration: formatDuration(item.length),
   };
 };

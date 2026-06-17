@@ -35,6 +35,7 @@ export interface ChallengeDataRes {
   releaseDate: string;
   viewCount: number;
   description: string;
+  video_url: string | null;
   length?: number;
 }
 
@@ -72,6 +73,7 @@ export interface ChallengeSearchResult {
   length: number;
   music_url: string;
   music_image_url: string | null; // 썸네일
+  video_url: string | null; // 영상 URL
   release_date: string | null;
 }
 export interface FeedbackSection {
