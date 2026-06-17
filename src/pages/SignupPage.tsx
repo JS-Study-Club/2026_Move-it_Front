@@ -5,6 +5,8 @@ import StartButton from "../components/StartButton";
 import InputField from "../components/InputFeild";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { api } from "../api/axios";
+import { getApiErrorMessage } from "../utils/apiError";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -20,24 +22,24 @@ export default function SignupPage() {
       setForm((prev) => ({ ...prev, [field]: e.target.value }));
     };
 
-  const handleSignup = (e?: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!form.name || !form.email || !form.id || !form.password) {
       alert("모든 항목을 입력해주세요.");
       return;
     }
-    // 회원가입은 캐릭터 선택까지 끝나야 완료됩니다.
-    // 입력한 정보를 들고 캐릭터 선택 화면으로 이동하고, 거기서 가입을 마무리합니다.
-    navigate("/select", {
-      state: {
-        signup: {
-          userId: form.id,
-          username: form.name,
-          email: form.email,
-          password: form.password,
-        },
-      },
-    });
+    try {
+      await api.post("auth/signup", {
+        userId: form.id,
+        username: form.name,
+        email: form.email,
+        password: form.password,
+      });
+      alert("회원가입이 완료되었습니다!");
+      navigate("/login");
+    } catch (error) {
+      alert(getApiErrorMessage(error, "회원가입에 실패했습니다."));
+    }
   };
 
   return (
@@ -73,31 +75,32 @@ export default function SignupPage() {
           value={form.password}
           onChange={handleChange("password")}
         />
-        <BottomSection>
-          <LinkRow>
-            <StartButton text="회원가입" onClick={handleSignup} type="submit" />
-            <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
-            <Divider>|</Divider>
-            <LinkText onClick={() => navigate("/login")}>로그인</LinkText>
-          </LinkRow>
-        </BottomSection>
       </FormSection>
+
+      <BottomSection>
+        <StartButton text="회원가입" onClick={handleSignup} type="submit" />
+        <LinkRow>
+          <LinkText onClick={() => navigate("/")}>첫 화면으로</LinkText>
+          <Divider>|</Divider>
+          <LinkText onClick={() => navigate("/login")}>로그인</LinkText>
+        </LinkRow>
+      </BottomSection>
     </PageContainer>
   );
 }
 
 const PageContainer = styled.div`
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   background-image: url(${Bgimg});
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 113px 0 0 0; /* 하단 padding 제거 */
+  padding: 113px 0 0;
   box-sizing: border-box;
-  position: relative; /* BottomSection absolute 기준점 */
 `;
 
 const TopSection = styled.div`
@@ -115,23 +118,23 @@ const LogoImage = styled.img`
 const FormSection = styled.form`
   width: 100%;
   max-width: 400px;
-  padding: 0 20px;
+  padding: 24px 20px 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  height: 340px; /* 고정 */
+  gap: 16px;
 `;
 
 const BottomSection = styled.div`
-  position: absolute;
-  bottom: 71px; /* 아래에서 71px 고정 */
+  margin-top: auto;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 15px;
+  padding: 24px 0 71px;
 `;
+
 const LinkRow = styled.div`
   display: inline-flex;
   align-items: center;

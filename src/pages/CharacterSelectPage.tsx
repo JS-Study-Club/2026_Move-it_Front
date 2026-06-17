@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import HeaderSelect from "../components/HeaderSelect";
 import leftArrow from "../img/leftArrow.svg";
 import rightArrow from "../img/rightArrow.svg";
@@ -34,21 +34,9 @@ interface Teacher {
 
 const teachers = teachersData as Teacher[];
 
-interface SignupState {
-  userId: string;
-  username: string;
-  email: string;
-  password: string;
-}
-
 export default function CharacterSelectPage() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  // 회원가입 화면에서 입력 정보를 들고 넘어온 경우 = "회원가입 마무리" 모드.
-  // (없으면 로그인된 사용자의 "캐릭터 변경" 모드)
-  const signup = (location.state as { signup?: SignupState } | null)?.signup;
 
   if (!teachers || teachers.length === 0) return null;
 
@@ -64,35 +52,11 @@ export default function CharacterSelectPage() {
 
   const handleSelect = async () => {
     try {
-      if (signup) {
-        // 회원가입 마무리: 선택한 캐릭터로 가입 처리 후 로그인 화면으로.
-        await api.post("auth/signup", {
-          userId: signup.userId,
-          username: signup.username,
-          email: signup.email,
-          password: signup.password,
-          teacherId: current.id,
-        });
-        alert("회원가입 완료!");
-        navigate("/login");
-        return;
-      }
-
-      // 캐릭터 변경: 로그인된 사용자의 teacher 갱신.
-      await api.patch("users/me", {
-        teacherId: current.id,
-      });
-      // 선택한 캐릭터는 서버(teacher_character_id)에 저장됐으므로, 메인에서
-      // API(/pages/home)로 다시 받아 표시합니다. (localStorage 사용 안 함)
+      await api.patch("users/me", { teacherId: current.id });
       navigate("/main");
     } catch (error) {
       console.error(error);
-      alert(
-        getApiErrorMessage(
-          error,
-          signup ? "회원가입에 실패했습니다." : "캐릭터 변경에 실패했습니다.",
-        ),
-      );
+      alert(getApiErrorMessage(error, "캐릭터 변경에 실패했습니다."));
     }
   };
 
